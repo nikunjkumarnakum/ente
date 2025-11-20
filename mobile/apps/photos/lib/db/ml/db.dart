@@ -62,6 +62,7 @@ class MLDataDB with SqlDbBase implements IMLDataDB<int> {
     createClipEmbeddingsTable,
     createFileDataTable,
     createFaceCacheTable,
+    createTextEmbeddingsCacheTable,
   ];
 
   // only have a single app-wide reference to the database
@@ -260,6 +261,9 @@ class MLDataDB with SqlDbBase implements IMLDataDB<int> {
     await db.execute(deleteNotPersonFeedbackTable);
     await db.execute(deleteClipEmbeddingsTable);
     await db.execute(deleteFileDataTable);
+    if (await ClipVectorDB.instance.checkIfMigrationDone()) {
+      await ClipVectorDB.instance.deleteIndexFile();
+    }
   }
 
   @override
@@ -1289,8 +1293,11 @@ class MLDataDB with SqlDbBase implements IMLDataDB<int> {
     int processedCount = 0;
     int weirdCount = 0;
     int whileCount = 0;
+    const String migrationKey = "clip_vector_db_migration_in_progress";
     final stopwatch = Stopwatch()..start();
     try {
+      // Make sure no other heavy compute is running
+      computeController.blockCompute(blocker: migrationKey);
       while (true) {
         whileCount++;
         _logger.info("$whileCount st round of while loop");
@@ -1320,6 +1327,9 @@ class MLDataDB with SqlDbBase implements IMLDataDB<int> {
             embeddings.add(Float32List.view(result[embeddingColumn].buffer));
           } else {
             weirdCount++;
+            _logger.warning(
+              "Weird clip embedding length ${embedding.length} for fileID ${result[fileIDColumn]}, skipping",
+            );
           }
         }
         _logger.info(
@@ -1346,7 +1356,7 @@ class MLDataDB with SqlDbBase implements IMLDataDB<int> {
         "migrated all $totalCount embeddings to ClipVectorDB in ${stopwatch.elapsed.inMilliseconds} ms, with $weirdCount weird embeddings not migrated",
       );
       await ClipVectorDB.instance.setMigrationDone();
-      _logger.info("ClipVectorDB migration done, flag file created");
+      _logger.info("ClipVectorDB migration done");
     } catch (e, s) {
       _logger.severe(
         "Error migrating ClipVectorDB after ${stopwatch.elapsed.inMilliseconds} ms, clearing out DB again",
@@ -1357,6 +1367,8 @@ class MLDataDB with SqlDbBase implements IMLDataDB<int> {
       rethrow;
     } finally {
       stopwatch.stop();
+      // Make sure compute can run again
+      computeController.unblockCompute(blocker: migrationKey);
     }
   }
 
@@ -1416,6 +1428,56 @@ class MLDataDB with SqlDbBase implements IMLDataDB<int> {
       }
     }
     Bus.instance.fire(EmbeddingUpdatedEvent());
+  }
+
+  /// WARNING: don't confuse this with [putClip]. If you're not sure, use [putClip]
+  Future<void> putRepeatedTextEmbeddingCache(
+    String query,
+    List<double> embedding,
+  ) async {
+    final db = await asyncDB;
+    await db.execute(
+      'INSERT OR REPLACE INTO $textEmbeddingsCacheTable '
+      '($textQueryColumn, $embeddingColumn, $mlVersionColumn, $createdAtColumn) '
+      'VALUES (?, ?, ?, ?)',
+      [
+        query,
+        Float32List.fromList(embedding).buffer.asUint8List(),
+        clipMlVersion,
+        DateTime.now().millisecondsSinceEpoch,
+      ],
+    );
+  }
+
+  /// WARNING: don't confuse this with [getAllClipVectors]. If you're not sure, use [getAllClipVectors]
+  Future<List<double>?> getRepeatedTextEmbeddingCache(String query) async {
+    final db = await asyncDB;
+    final results = await db.getAll(
+      'SELECT $embeddingColumn, $mlVersionColumn, $createdAtColumn '
+      'FROM $textEmbeddingsCacheTable '
+      'WHERE $textQueryColumn = ?',
+      [query],
+    );
+
+    if (results.isEmpty) return null;
+
+    final threeMonthsAgo =
+        DateTime.now().millisecondsSinceEpoch - (90 * 24 * 60 * 60 * 1000);
+
+    // Find first valid entry
+    for (final result in results) {
+      if (result[mlVersionColumn] == clipMlVersion &&
+          result[createdAtColumn] as int > threeMonthsAgo) {
+        return Float32List.view((result[embeddingColumn] as Uint8List).buffer);
+      }
+    }
+
+    // No valid entry found, clean up
+    await db.execute(
+      'DELETE FROM $textEmbeddingsCacheTable WHERE $textQueryColumn = ?',
+      [query],
+    );
+    return null;
   }
 
   @override

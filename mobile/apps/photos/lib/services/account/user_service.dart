@@ -1,5 +1,6 @@
 import 'dart:async';
 import "dart:convert";
+import "dart:io";
 import "dart:math";
 
 import 'package:bip39/bip39.dart' as bip39;
@@ -44,6 +45,7 @@ import 'package:photos/ui/notification/toast.dart';
 import "package:photos/ui/tabs/home_widget.dart";
 import 'package:photos/utils/dialog_util.dart';
 import 'package:photos/utils/navigation_util.dart';
+import "package:photos/utils/standalone/timed_cache.dart";
 import "package:pointycastle/export.dart";
 import "package:pointycastle/srp/srp6_client.dart";
 import "package:pointycastle/srp/srp6_standard_groups.dart";
@@ -59,6 +61,9 @@ class UserService {
 
   final SRP6GroupParameters kDefaultSrpGroup = SRP6StandardGroups.rfc5054_4096;
   final _dio = NetworkClient.instance.getDio();
+  final _emailToPubKeyCache =
+      TimedCache<String, String>(duration: const Duration(seconds: 10));
+
   final _enteDio = NetworkClient.instance.enteDio;
   final _logger = Logger((UserService).toString());
   final _config = Configuration.instance;
@@ -94,7 +99,8 @@ class UserService {
     bool isResetPasswordScreen = false,
     String? purpose,
   }) async {
-    final dialog = createProgressDialog(context, S.of(context).pleaseWait);
+    final dialog =
+        createProgressDialog(context, AppLocalizations.of(context).pleaseWait);
     await dialog.show();
     try {
       final response = await _dio.post(
@@ -102,6 +108,7 @@ class UserService {
         data: {
           "email": email,
           "purpose": isChangeEmail ? "change" : purpose ?? "",
+          "mobile": Platform.isIOS || Platform.isAndroid,
         },
       );
       await dialog.hide();
@@ -148,8 +155,8 @@ class UserService {
         unawaited(
           showErrorDialog(
             context,
-            S.of(context).oops,
-            S.of(context).thisEmailIsAlreadyInUse,
+            AppLocalizations.of(context).oops,
+            AppLocalizations.of(context).thisEmailIsAlreadyInUse,
           ),
         );
       } else {
@@ -178,12 +185,17 @@ class UserService {
   // getPublicKey returns null value if email id is not
   // associated with another ente account
   Future<String?> getPublicKey(String email) async {
+    final String? cachedPubKey = _emailToPubKeyCache.get(email);
+    if (cachedPubKey != null) {
+      return cachedPubKey;
+    }
     try {
       final response = await _enteDio.get(
         "/users/public-key",
         queryParameters: {"email": email},
       );
       final publicKey = response.data["publicKey"];
+      _emailToPubKeyCache.set(email, publicKey);
       return publicKey;
     } on DioException catch (e) {
       if (e.response != null && e.response?.statusCode == 404) {
@@ -270,12 +282,31 @@ class UserService {
         throw Exception("Log out action failed");
       }
     } catch (e) {
-      // check if token is already invalid
-      if (e is DioException && e.response?.statusCode == 401) {
+      // Determine if we should silently ignore the error and proceed with logout
+      final bool silentlyIgnoreError =
+          // Token is already invalid (401 response)
+          (e is DioException && e.response?.statusCode == 401) ||
+              // Custom endpoints where server might be non-existent or unavailable
+              !_config.isEnteProduction();
+
+      if (silentlyIgnoreError) {
+        if (!_config.isEnteProduction()) {
+          _logger.info(
+            "Custom endpoint detected, proceeding with local logout despite server error",
+          );
+        } else {
+          _logger.info("Token already invalid, proceeding with local logout");
+        }
+
         await Configuration.instance.logout();
-        Navigator.of(context).popUntil((route) => route.isFirst);
+
+        // Navigate to first route if context is still mounted
+        if (context.mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
         return;
       }
+
       _logger.severe("Failed to logout", e);
       //This future is for waiting for the dialog from which logout() is called
       //to close and only then to show the error dialog.
@@ -401,7 +432,8 @@ class UserService {
     String ott, {
     bool isResettingPasswordScreen = false,
   }) async {
-    final dialog = createProgressDialog(context, S.of(context).pleaseWait);
+    final dialog =
+        createProgressDialog(context, AppLocalizations.of(context).pleaseWait);
     await dialog.show();
     final verifyData = {
       "email": _config.getEmail(),
@@ -466,16 +498,16 @@ class UserService {
       if (e.response != null && e.response!.statusCode == 410) {
         await showErrorDialog(
           context,
-          S.of(context).oops,
-          S.of(context).yourVerificationCodeHasExpired,
+          AppLocalizations.of(context).oops,
+          AppLocalizations.of(context).yourVerificationCodeHasExpired,
         );
         Navigator.of(context).pop();
       } else {
         // ignore: unawaited_futures
         showErrorDialog(
           context,
-          S.of(context).incorrectCode,
-          S.of(context).sorryTheCodeYouveEnteredIsIncorrect,
+          AppLocalizations.of(context).incorrectCode,
+          AppLocalizations.of(context).sorryTheCodeYouveEnteredIsIncorrect,
         );
       }
     } catch (e) {
@@ -484,8 +516,8 @@ class UserService {
       // ignore: unawaited_futures
       showErrorDialog(
         context,
-        S.of(context).oops,
-        S.of(context).verificationFailedPleaseTryAgain,
+        AppLocalizations.of(context).oops,
+        AppLocalizations.of(context).verificationFailedPleaseTryAgain,
       );
     }
   }
@@ -508,7 +540,8 @@ class UserService {
     String email,
     String ott,
   ) async {
-    final dialog = createProgressDialog(context, S.of(context).pleaseWait);
+    final dialog =
+        createProgressDialog(context, AppLocalizations.of(context).pleaseWait);
     await dialog.show();
     try {
       final response = await _enteDio.post(
@@ -520,7 +553,10 @@ class UserService {
       );
       await dialog.hide();
       if (response.statusCode == 200) {
-        showShortToast(context, S.of(context).emailChangedTo(email));
+        showShortToast(
+          context,
+          AppLocalizations.of(context).emailChangedTo(newEmail: email),
+        );
         await setEmail(email);
         Navigator.of(context).popUntil((route) => route.isFirst);
         Bus.instance.fire(UserDetailsChangedEvent());
@@ -529,8 +565,8 @@ class UserService {
       // ignore: unawaited_futures
       showErrorDialog(
         context,
-        S.of(context).oops,
-        S.of(context).verificationFailedPleaseTryAgain,
+        AppLocalizations.of(context).oops,
+        AppLocalizations.of(context).verificationFailedPleaseTryAgain,
       );
     } on DioException catch (e) {
       await dialog.hide();
@@ -538,15 +574,15 @@ class UserService {
         // ignore: unawaited_futures
         showErrorDialog(
           context,
-          S.of(context).oops,
-          S.of(context).thisEmailIsAlreadyInUse,
+          AppLocalizations.of(context).oops,
+          AppLocalizations.of(context).thisEmailIsAlreadyInUse,
         );
       } else {
         // ignore: unawaited_futures
         showErrorDialog(
           context,
-          S.of(context).incorrectCode,
-          S.of(context).authenticationFailedPleaseTryAgain,
+          AppLocalizations.of(context).incorrectCode,
+          AppLocalizations.of(context).authenticationFailedPleaseTryAgain,
         );
       }
     } catch (e) {
@@ -555,8 +591,8 @@ class UserService {
       // ignore: unawaited_futures
       showErrorDialog(
         context,
-        S.of(context).oops,
-        S.of(context).verificationFailedPleaseTryAgain,
+        AppLocalizations.of(context).oops,
+        AppLocalizations.of(context).verificationFailedPleaseTryAgain,
       );
     }
   }
@@ -843,7 +879,10 @@ class UserService {
     String sessionID,
     String code,
   ) async {
-    final dialog = createProgressDialog(context, S.of(context).authenticating);
+    final dialog = createProgressDialog(
+      context,
+      AppLocalizations.of(context).authenticating,
+    );
     await dialog.show();
     try {
       final response = await _dio.post(
@@ -855,7 +894,10 @@ class UserService {
       );
       await dialog.hide();
       if (response.statusCode == 200) {
-        showShortToast(context, S.of(context).authenticationSuccessful);
+        showShortToast(
+          context,
+          AppLocalizations.of(context).authenticationSuccessful,
+        );
         await _saveConfiguration(response);
         await Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
@@ -870,7 +912,7 @@ class UserService {
       await dialog.hide();
       _logger.severe(e);
       if (e.response != null && e.response!.statusCode == 404) {
-        showToast(context, S.of(context).sessionExpired);
+        showToast(context, AppLocalizations.of(context).sessionExpired);
         await Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (BuildContext context) {
@@ -883,8 +925,8 @@ class UserService {
         // ignore: unawaited_futures
         showErrorDialog(
           context,
-          S.of(context).incorrectCode,
-          S.of(context).authenticationFailedPleaseTryAgain,
+          AppLocalizations.of(context).incorrectCode,
+          AppLocalizations.of(context).authenticationFailedPleaseTryAgain,
         );
       }
     } catch (e) {
@@ -893,8 +935,8 @@ class UserService {
       // ignore: unawaited_futures
       showErrorDialog(
         context,
-        S.of(context).oops,
-        S.of(context).authenticationFailedPleaseTryAgain,
+        AppLocalizations.of(context).oops,
+        AppLocalizations.of(context).authenticationFailedPleaseTryAgain,
       );
     }
   }
@@ -904,7 +946,8 @@ class UserService {
     String sessionID,
     TwoFactorType type,
   ) async {
-    final dialog = createProgressDialog(context, S.of(context).pleaseWait);
+    final dialog =
+        createProgressDialog(context, AppLocalizations.of(context).pleaseWait);
     await dialog.show();
     try {
       _logger.info("recovering two factor");
@@ -937,7 +980,7 @@ class UserService {
       await dialog.hide();
       _logger.severe('error while recovery 2fa', e);
       if (e.response != null && e.response!.statusCode == 404) {
-        showToast(context, S.of(context).sessionExpired);
+        showToast(context, AppLocalizations.of(context).sessionExpired);
         // ignore: unawaited_futures
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
@@ -951,8 +994,8 @@ class UserService {
         // ignore: unawaited_futures
         showErrorDialog(
           context,
-          S.of(context).oops,
-          S.of(context).somethingWentWrongPleaseTryAgain,
+          AppLocalizations.of(context).oops,
+          AppLocalizations.of(context).somethingWentWrongPleaseTryAgain,
         );
       }
     } catch (e) {
@@ -962,8 +1005,8 @@ class UserService {
       // ignore: unawaited_futures
       showErrorDialog(
         context,
-        S.of(context).oops,
-        S.of(context).somethingWentWrongPleaseTryAgain,
+        AppLocalizations.of(context).oops,
+        AppLocalizations.of(context).somethingWentWrongPleaseTryAgain,
       );
     } finally {
       await dialog.hide();
@@ -978,7 +1021,8 @@ class UserService {
     String encryptedSecret,
     String secretDecryptionNonce,
   ) async {
-    final dialog = createProgressDialog(context, S.of(context).pleaseWait);
+    final dialog =
+        createProgressDialog(context, AppLocalizations.of(context).pleaseWait);
     await dialog.show();
     String secret;
     try {
@@ -1001,8 +1045,8 @@ class UserService {
       await dialog.hide();
       await showErrorDialog(
         context,
-        S.of(context).incorrectRecoveryKey,
-        S.of(context).theRecoveryKeyYouEnteredIsIncorrect,
+        AppLocalizations.of(context).incorrectRecoveryKey,
+        AppLocalizations.of(context).theRecoveryKeyYouEnteredIsIncorrect,
       );
       return;
     }
@@ -1019,7 +1063,7 @@ class UserService {
       if (response.statusCode == 200) {
         showShortToast(
           context,
-          S.of(context).twofactorAuthenticationSuccessfullyReset,
+          AppLocalizations.of(context).twofactorAuthenticationSuccessfullyReset,
         );
         await _saveConfiguration(response);
         // ignore: unawaited_futures
@@ -1036,7 +1080,7 @@ class UserService {
       await dialog.hide();
       _logger.severe("error during recovery", e);
       if (e.response != null && e.response!.statusCode == 404) {
-        showToast(context, S.of(context).sessionExpired);
+        showToast(context, AppLocalizations.of(context).sessionExpired);
         // ignore: unawaited_futures
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
@@ -1050,8 +1094,8 @@ class UserService {
         // ignore: unawaited_futures
         showErrorDialog(
           context,
-          S.of(context).oops,
-          S.of(context).somethingWentWrongPleaseTryAgain,
+          AppLocalizations.of(context).oops,
+          AppLocalizations.of(context).somethingWentWrongPleaseTryAgain,
         );
       }
     } catch (e) {
@@ -1061,8 +1105,8 @@ class UserService {
       // ignore: unawaited_futures
       showErrorDialog(
         context,
-        S.of(context).oops,
-        S.of(context).somethingWentWrongPleaseTryAgain,
+        AppLocalizations.of(context).oops,
+        AppLocalizations.of(context).somethingWentWrongPleaseTryAgain,
       );
     } finally {
       await dialog.hide();
@@ -1070,7 +1114,8 @@ class UserService {
   }
 
   Future<void> setupTwoFactor(BuildContext context, Completer completer) async {
-    final dialog = createProgressDialog(context, S.of(context).pleaseWait);
+    final dialog =
+        createProgressDialog(context, AppLocalizations.of(context).pleaseWait);
     await dialog.show();
     try {
       final response = await _enteDio.post("/users/two-factor/setup");
@@ -1105,7 +1150,8 @@ class UserService {
       await showGenericErrorDialog(context: context, error: e);
       return false;
     }
-    final dialog = createProgressDialog(context, S.of(context).verifying);
+    final dialog =
+        createProgressDialog(context, AppLocalizations.of(context).verifying);
     await dialog.show();
     final encryptionResult =
         CryptoUtil.encryptSync(CryptoUtil.base642bin(secret), recoveryKey);
@@ -1132,8 +1178,8 @@ class UserService {
           // ignore: unawaited_futures
           showErrorDialog(
             context,
-            S.of(context).incorrectCode,
-            S.of(context).pleaseVerifyTheCodeYouHaveEntered,
+            AppLocalizations.of(context).incorrectCode,
+            AppLocalizations.of(context).pleaseVerifyTheCodeYouHaveEntered,
           );
           return false;
         }
@@ -1141,8 +1187,8 @@ class UserService {
       // ignore: unawaited_futures
       showErrorDialog(
         context,
-        S.of(context).somethingWentWrong,
-        S.of(context).pleaseContactSupportIfTheProblemPersists,
+        AppLocalizations.of(context).somethingWentWrong,
+        AppLocalizations.of(context).pleaseContactSupportIfTheProblemPersists,
       );
     }
     return false;
@@ -1151,7 +1197,7 @@ class UserService {
   Future<void> disableTwoFactor(BuildContext context) async {
     final dialog = createProgressDialog(
       context,
-      S.of(context).disablingTwofactorAuthentication,
+      AppLocalizations.of(context).disablingTwofactorAuthentication,
     );
     await dialog.show();
     try {
@@ -1162,15 +1208,15 @@ class UserService {
       Bus.instance.fire(TwoFactorStatusChangeEvent(false));
       showShortToast(
         context,
-        S.of(context).twofactorAuthenticationHasBeenDisabled,
+        AppLocalizations.of(context).twofactorAuthenticationHasBeenDisabled,
       );
     } catch (e) {
       await dialog.hide();
       _logger.severe("Failed to disabled 2FA", e);
       await showErrorDialog(
         context,
-        S.of(context).somethingWentWrong,
-        S.of(context).pleaseContactSupportIfTheProblemPersists,
+        AppLocalizations.of(context).somethingWentWrong,
+        AppLocalizations.of(context).pleaseContactSupportIfTheProblemPersists,
       );
     }
   }
@@ -1190,7 +1236,10 @@ class UserService {
     final String? encryptedRecoveryKey =
         _config.getKeyAttributes()!.recoveryKeyEncryptedWithMasterKey;
     if (encryptedRecoveryKey == null || encryptedRecoveryKey.isEmpty) {
-      final dialog = createProgressDialog(context, S.of(context).pleaseWait);
+      final dialog = createProgressDialog(
+        context,
+        AppLocalizations.of(context).pleaseWait,
+      );
       await dialog.show();
       try {
         final keyAttributes = await _config.createNewRecoveryKey();
@@ -1238,7 +1287,10 @@ class UserService {
 
   Future<void> _saveConfiguration(dynamic response) async {
     final responseData = response is Map ? response : response.data as Map?;
-    if (responseData == null) return;
+    if (responseData == null) {
+      _logger.warning("(for debugging) Response data is null");
+      return;
+    }
 
     await Configuration.instance.setUserID(responseData["id"]);
     if (responseData["encryptedToken"] != null) {
@@ -1333,9 +1385,11 @@ class UserService {
           if (u.id != null &&
               u.email.isNotEmpty &&
               u.email == ownerEmail &&
-              (u.isCollaborator || u.isViewer)) {
+              (u.isAdmin || u.isCollaborator || u.isViewer)) {
             for (final User u in c.sharees) {
-              if (u.id != null && u.email.isNotEmpty && u.isCollaborator) {
+              if (u.id != null &&
+                  u.email.isNotEmpty &&
+                  (u.isCollaborator || u.isAdmin)) {
                 if (!existingEmails.contains(u.email)) {
                   relevantUsers.add(u);
                   existingEmails.add(u.email);
@@ -1408,9 +1462,11 @@ class UserService {
           if (u.id != null &&
               u.email.isNotEmpty &&
               u.email == ownerEmail &&
-              (u.isCollaborator || u.isViewer)) {
+              (u.isAdmin || u.isCollaborator || u.isViewer)) {
             for (final User u in c.sharees) {
-              if (u.id != null && u.email.isNotEmpty && u.isCollaborator) {
+              if (u.id != null &&
+                  u.email.isNotEmpty &&
+                  (u.isCollaborator || u.isAdmin)) {
                 if (!emailIDs.contains(u.email)) {
                   emailIDs.add(u.email);
                 }

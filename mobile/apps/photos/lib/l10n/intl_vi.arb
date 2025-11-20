@@ -11,6 +11,7 @@
   "invalidEmailAddress": "Địa chỉ email không hợp lệ",
   "enterValidEmail": "Vui lòng nhập một địa chỉ email hợp lệ.",
   "deleteAccount": "Xóa tài khoản",
+  "deleteAccountWarning": "Việc này sẽ xóa Ente Auth, Ente Photos và tài khoản Ente Locker của bạn.",
   "askDeleteReason": "Lý do chính bạn xóa tài khoản là gì?",
   "deleteAccountFeedbackPrompt": "Chúng tôi rất tiếc khi thấy bạn rời đi. Vui lòng chia sẻ phản hồi của bạn để giúp chúng tôi cải thiện.",
   "feedback": "Phản hồi",
@@ -28,12 +29,22 @@
   "deleteRequestSLAText": "Yêu cầu của bạn sẽ được xử lý trong vòng 72 giờ.",
   "deleteEmailRequest": "Vui lòng gửi email đến <warning>account-deletion@ente.io</warning> từ địa chỉ email đã đăng ký của bạn.",
   "entePhotosPerm": "Ente <i>cần quyền để</i> lưu giữ ảnh của bạn",
-  "ok": "Được",
+  "ok": "OK",
   "createAccount": "Tạo tài khoản",
   "createNewAccount": "Tạo tài khoản mới",
   "password": "Mật khẩu",
   "confirmPassword": "Xác nhận mật khẩu",
   "activeSessions": "Phiên hoạt động",
+  "ocrProcessingOverlayMessage": "Đang phát hiện văn bản...",
+  "ocrLoadingIndicatorLabel": "Phát hiện văn bản",
+  "ocrSelectionHint": "Vuốt hoặc nhấn đúp để chọn chính xác những gì bạn cần",
+  "ocrNoTextDetected": "Không phát hiện văn bản",
+  "ocrRetryButtonLabel": "Thử lại",
+  "ocrModelsNetworkRequiredError": "Cần có kết nối mạng để tải xuống các mô hình OCR khi sử dụng lần đầu",
+  "ocrModelsPrepareFailed": "Không thể chuẩn bị các mô hình OCR",
+  "ocrImageNotFoundError": "Không tìm thấy tệp ảnh",
+  "ocrImageDecodeFailedError": "Không thể đọc tệp ảnh",
+  "ocrGenericDetectError": "Không thể phát hiện văn bản trong ảnh",
   "oops": "Ốii!",
   "somethingWentWrongPleaseTryAgain": "Có gì đó không ổn, vui lòng thử lại",
   "thisWillLogYouOutOfThisDevice": "Bạn sẽ đăng xuất khỏi thiết bị này!",
@@ -107,6 +118,10 @@
   "enterYourPassword": "Nhập mật khẩu của bạn",
   "welcomeBack": "Chào mừng trở lại!",
   "contactSupport": "Liên hệ hỗ trợ",
+  "locationPickerTip": "Bạn cũng có thể thêm vị trí tập trung vào ảnh từ phần thông tin của ảnh",
+  "@locationPickerTip": {
+    "description": "Helper tip text shown in the location picker that refers to the photo info screen."
+  },
   "incorrectPasswordTitle": "Mật khẩu không đúng",
   "pleaseTryAgain": "Vui lòng thử lại",
   "recreatePasswordTitle": "Tạo lại mật khẩu",
@@ -186,6 +201,7 @@
   "@allowAddingPhotos": {
     "description": "Switch button to enable uploading photos to a public link"
   },
+  "allowJoiningAlbum": "Cho phép ghép album",
   "allowAddPhotosDescription": "Cho phép người có liên kết thêm ảnh vào album chia sẻ.",
   "passwordLock": "Khóa bằng mật khẩu",
   "canNotOpenTitle": "Không thể mở album này",
@@ -198,6 +214,11 @@
   "@noDeviceLimit": {
     "description": "Text to indicate that there is limit on number of devices"
   },
+  "albumLayout": "Bố cục album",
+  "layoutGrouped": "Đã phân nhóm",
+  "layoutContinuous": "Liên tục",
+  "layoutTrip": "Chuyến đi",
+  "preview": "Xem trước",
   "linkExpiry": "Hết hạn liên kết",
   "linkExpired": "Hết hạn",
   "linkEnabled": "Đã bật",
@@ -237,11 +258,13 @@
   "shareWithNonenteUsers": "Chia sẻ với người không dùng Ente",
   "createPublicLink": "Tạo liên kết công khai",
   "sendLink": "Gửi liên kết",
+  "sendQrCode": "Gửi mã QR",
   "copyLink": "Sao chép liên kết",
+  "copyEmbedHtml": "Sao chép mã nhúng HTML",
   "linkHasExpired": "Liên kết đã hết hạn",
   "publicLinkEnabled": "Liên kết công khai đã được bật",
   "shareALink": "Chia sẻ một liên kết",
-  "sharedAlbumSectionDescription": "Tạo album chia sẻ và cộng tác với người dùng Ente khác, bao gồm cả người dùng các gói miễn phí.",
+  "sharedAlbumSectionDescription": "Tạo album chia sẻ và cộng tác với người dùng Ente khác, bao gồm người dùng gói miễn phí.",
   "shareWithPeopleSectionTitle": "{numberOfPeople, plural, =0 {Chia sẻ với những người cụ thể} =1 {Chia sẻ với 1 người} other {Chia sẻ với {numberOfPeople} người}}",
   "@shareWithPeopleSectionTitle": {
     "placeholders": {
@@ -293,7 +316,7 @@
   "theyAlsoGetXGb": "Họ cũng nhận được {storageAmountInGB} GB",
   "freeStorageOnReferralSuccess": "{storageAmountInGB} GB mỗi khi ai đó đăng ký gói trả phí và áp dụng mã của bạn",
   "shareTextReferralCode": "Mã giới thiệu Ente: {referralCode} \n\nÁp dụng nó trong Cài đặt → Chung → Giới thiệu để nhận thêm {referralStorageInGB} GB miễn phí sau khi bạn đăng ký gói trả phí\n\nhttps://ente.io",
-  "claimFreeStorage": "Nhận thêm dung lượng miễn phí",
+  "claimFreeStorage": "Nhận thêm dung lượng",
   "inviteYourFriends": "Mời bạn bè của bạn",
   "failedToFetchReferralDetails": "Không thể lấy thông tin giới thiệu. Vui lòng thử lại sau.",
   "referralStep1": "1. Đưa mã này cho bạn bè của bạn",
@@ -1169,8 +1192,8 @@
     "description": "Label for the map view"
   },
   "maps": "Bản đồ",
+  "mapsPrivacyNotice": "Tọa độ gần đúng sẽ được gửi đến các bên thứ ba quan tâm đến quyền riêng tư như OpenStreetMap để hiển thị bản đồ và vị trí.",
   "enableMaps": "Kích hoạt Bản đồ",
-  "enableMapsDesc": "Ảnh của bạn sẽ hiển thị trên bản đồ thế giới.\n\nBản đồ được lưu trữ bởi OpenStreetMap và vị trí chính xác ảnh của bạn không bao giờ được chia sẻ.\n\nBạn có thể tắt tính năng này bất cứ lúc nào từ Cài đặt.",
   "quickLinks": "Liên kết nhanh",
   "selectItemsToAdd": "Chọn mục để thêm",
   "addSelected": "Thêm mục đã chọn",
@@ -1588,7 +1611,6 @@
   },
   "legacyInvite": "{email} đã mời bạn trở thành một liên hệ tin cậy",
   "authToManageLegacy": "Vui lòng xác thực để quản lý các liên hệ tin cậy",
-  "useDifferentPlayerInfo": "Phát video gặp vấn đề? Nhấn giữ tại đây để thử một trình phát khác.",
   "hideSharedItemsFromHomeGallery": "Ẩn các mục được chia sẻ khỏi thư viện chính",
   "gallery": "Thư viện",
   "joinAlbum": "Tham gia album",
@@ -1776,14 +1798,6 @@
   "same": "Chính xác",
   "different": "Khác",
   "sameperson": "Cùng một người?",
-  "cLTitle1": "Trình chỉnh sửa ảnh nâng cao",
-  "cLDesc1": "Chúng tôi phát hành một trình chỉnh sửa ảnh tân tiến, bổ sung thêm cắt ảnh, bộ lọc có sẵn để chỉnh sửa nhanh, các tùy chọn tinh chỉnh bao gồm độ bão hòa, độ tương phản, độ sáng, độ ấm và nhiều hơn nữa. Trình chỉnh sửa mới cũng bao gồm khả năng vẽ lên ảnh và thêm emoji dưới dạng nhãn dán.",
-  "cLTitle2": "Album thông minh",
-  "cLDesc2": "Giờ đây, bạn có thể tự động thêm ảnh của những người đã chọn vào bất kỳ album nào. Chỉ cần mở album và chọn \"Tự động thêm người\" trong menu. Nếu sử dụng cùng với album chia sẻ, bạn có thể chia sẻ ảnh mà không cần tốn công.",
-  "cLTitle3": "Cải tiến Thư viện ảnh",
-  "cLDesc3": "Chúng tôi bổ sung tính năng phân nhóm thư viện ảnh theo tuần, tháng và năm. Giờ đây, bạn có thể tùy chỉnh thư viện ảnh theo đúng ý muốn với các tùy chọn mới này, cùng với các lưới tùy chỉnh.",
-  "cLTitle4": "Cuộn nhanh hơn",
-  "cLDesc4": "Cùng với một loạt cải tiến ngầm nhằm nâng cao trải nghiệm cuộn thư viện, chúng tôi cũng đã thiết kế lại thanh cuộn để hiển thị các điểm đánh dấu, cho phép bạn nhanh chóng nhảy cóc trên dòng thời gian.",
   "indexingPausedStatusDescription": "Lập chỉ mục bị tạm dừng. Nó sẽ tự động tiếp tục khi thiết bị đã sẵn sàng. Thiết bị được coi là sẵn sàng khi mức pin, tình trạng pin và trạng thái nhiệt độ nằm trong phạm vi tốt.",
   "thisWeek": "Tuần này",
   "lastWeek": "Tuần trước",
@@ -1808,7 +1822,6 @@
   "automaticallyAnalyzeAndSplitGrouping": "Chúng tôi sẽ tự động phân tích nhóm để xác định xem có nhiều người góp mặt hay không và tách họ ra lần nữa. Việc này có thể mất vài giây.",
   "layout": "Bố cục",
   "day": "Ngày",
-  "peopleAutoAddDesc": "Chọn những người bạn muốn tự động thêm vào album",
   "undo": "Hoàn tác",
   "redo": "Làm lại",
   "filter": "Bộ lọc",
@@ -1827,5 +1840,174 @@
         "type": "int"
       }
     }
-  }
+  },
+  "videosProcessed": "Video đã được xử lý",
+  "totalVideos": "Tổng số video",
+  "skippedVideos": "Video bị bỏ qua",
+  "videoStreamingDescriptionLine1": "Phát video trên bất kỳ thiết bị.",
+  "videoStreamingDescriptionLine2": "Bật để xử lý luồng phát video trên thiết bị này.",
+  "videoStreamingNote": "Thiết bị này chỉ xử lý các video từ 60 ngày trở xuống và có thời lượng dưới 1 phút. Đối với các video cũ hơn/dài hơn, hãy bật tính năng phát trực tuyến trong ứng dụng máy tính để bàn.",
+  "createStream": "Tạo phát trực tiếp",
+  "recreateStream": "Tạo lại phát trực tiếp",
+  "addedToStreamCreationQueue": "Đã thêm vào hàng đợi tạo luồng",
+  "addedToStreamRecreationQueue": "Đã thêm vào hàng đợi tạo lại luồng",
+  "videoPreviewAlreadyExists": "Bản xem trước video đã tồn tại",
+  "videoAlreadyInQueue": "Tệp video đã có trong hàng đợi",
+  "videoExportFailed": "Tạo video không thành công. Vui lòng thử lại.",
+  "videoExportSuccess": "Đã tạo video thành công tại {path}",
+  "@videoExportSuccess": {
+    "description": "Toast shown when a video export completes, mentioning the filesystem path.",
+    "placeholders": {
+      "path": {
+        "description": "File path where the exported video was written",
+        "type": "String",
+        "example": "/tmp/ente_export.mp4"
+      }
+    }
+  },
+  "addedToQueue": "Đã thêm vào hàng đợi",
+  "creatingStream": "Đang tạo luồng",
+  "similarImages": "Ảnh giống nhau",
+  "findSimilarImages": "Tìm ảnh giống nhau",
+  "noSimilarImagesFound": "Không tìm thấy ảnh giống nhau",
+  "yourPhotosLookUnique": "Ảnh của bạn trông độc đáo",
+  "similarGroupsFound": "{count, plural, =1{{count} nhóm được tìm thấy} other{{count} nhóm được tìm thấy}}",
+  "@similarGroupsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewAndRemoveSimilarImages": "Xem lại và xóa ảnh giống nhau",
+  "deletePhotosWithSize": "Xóa {count} ảnh ({size})",
+  "@deletePhotosWithSize": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionOptions": "Tùy chọn lựa chọn",
+  "selectExactWithCount": "Giống nhau hoàn toàn ({count})",
+  "@selectExactWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectExact": "Chọn chính xác",
+  "selectSimilarWithCount": "Giống nhau một phần ({count})",
+  "@selectSimilarWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectSimilar": "Chọn giống nhau",
+  "selectAllWithCount": "Tất cả giống nhau ({count})",
+  "@selectAllWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectSimilarImagesTitle": "Chọn những ảnh giống nhau",
+  "chooseSimilarImagesToSelect": "Chọn ảnh dựa trên sự tương đồng thị giác",
+  "clearSelection": "Bỏ chọn",
+  "similarImagesCount": "{count} ảnh giống nhau",
+  "@similarImagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteWithCount": "Xóa ({count})",
+  "@deleteWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteFiles": "Xóa các tệp",
+  "areYouSureDeleteFiles": "Bạn có chắc muốn xóa các tệp này?",
+  "greatJob": "Tốt lắm!",
+  "cleanedUpSimilarImages": "Bạn tiết kiệm được {size}",
+  "@cleanedUpSimilarImages": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "size": "Dung lượng",
+  "similarity": "Sự giống nhau",
+  "analyzingPhotosLocally": "Phân tích ảnh của bạn trên thiết bị...",
+  "lookingForVisualSimilarities": "Tìm theo sự tương đồng thị giác...",
+  "comparingImageDetails": "So sánh các đặc điểm ảnh...",
+  "findingSimilarImages": "Tìm các ảnh giống nhau...",
+  "almostDone": "Sắp xong...",
+  "processingLocally": "Đang xử lý cục bộ",
+  "useMLToFindSimilarImages": "Xem lại và xóa những ảnh có vẻ giống nhau.",
+  "all": "Tất cả",
+  "similar": "Giống nhau",
+  "identical": "Giống hệt nhau",
+  "nothingHereTryAnotherFilter": "Không thấy gì, hãy thử thay đổi bộ lọc! 👀",
+  "related": "Có liên quan",
+  "hoorayyyy": "Hoorayyyy!",
+  "nothingToTidyUpHere": "Ở đây đã ngon lành rồi",
+  "deletingDash": "Đang xóa - ",
+  "cLTitle1": "Chuyển đến ngày",
+  "cLDesc1": "Xem các ảnh xung quanh cho bất kỳ ảnh nào bằng cách chọn tùy chọn chuyển đến ngày trong ngăn thông tin của tệp.",
+  "cLTitle2": "Chỉnh sửa video nhanh hơn",
+  "cLDesc2": "Trình chỉnh sửa video đã được cải tiến để cải thiện đáng kể tốc độ khi chỉnh sửa video lớn cũng như cải thiện UX.",
+  "cLTitle3": "Kỷ niệm mới",
+  "cLDesc3": "\"Những đứa trẻ vui tươi\", \"Cuộc phiêu lưu mùa đông\", \"Đêm neon\" và hơn thế nữa.",
+  "cLTitle4": "Phòng trưng bày phong cảnh và hơn thế nữa",
+  "cLDesc4": "Hỗ trợ bố cục ngang trong thư viện chính của ứng dụng. Hiển thị những người không có bất kỳ ảnh liên quan nào thay vì lọc chúng ra. Cải thiện khả năng phát hiện khía cạnh video khi được chia sẻ từ các ứng dụng bên ngoài.",
+  "closeBy": "Gần giống",
+  "@closeBy": {
+    "description": "Appears in the similar images page, to indicate that the images are close in terms of appearance"
+  },
+  "peopleAutoAddDesc": "Tự động thêm ảnh của những người đã chọn vào album này",
+  "@peopleAutoAddDesc": {
+    "description": "The message the copy should convey is that photos or videos containing the selected people's faces will be automatically added to this album"
+  },
+  "festivities": "Vui lễ hội",
+  "snowAdventures": "Phiêu lưu mùa đông",
+  "waterfalls": "Thác nước",
+  "wildlife": "Vào trong hoang dã",
+  "flowers": "Nở thắm",
+  "nightLights": "Đêm neon",
+  "architecture": "Biểu tượng thiết kế",
+  "autumnColors": "Thu quyến rũ",
+  "desertDreams": "Giấc mơ sa mạc",
+  "stargazing": "Dưới những vì sao",
+  "lakeside": "Hồ tĩnh lặng",
+  "rainyDays": "Ngày mưa",
+  "sportsAction": "Trò chơi",
+  "streetArt": "Đường phố",
+  "familyMoments": "Gia đình",
+  "fireworks": "Pháo hoa",
+  "historicSites": "Di tích lịch sử",
+  "tropicalParadise": "Rừng nhiệt đới",
+  "forestTrails": "Đi dạo trong rừng",
+  "citySunsets": "Hoàng hôn thành phố",
+  "colorfulMarkets": "Khu chợ sắc màu",
+  "cozyCafes": "Góc cà phê",
+  "vintageVibes": "Cổ điển",
+  "aerialViews": "Trên không trung",
+  "artisticPortraits": "Chân dung nghệ thuật",
+  "streetFood": "Món ngon đường phố",
+  "riverCruises": "Cảnh quan trên sông",
+  "playfulKids": "Trẻ em vui chơi",
+  "coastalCliffs": "Vách đá bên bờ biển"
 }

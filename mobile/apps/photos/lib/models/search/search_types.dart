@@ -14,6 +14,7 @@ import "package:photos/models/collection/collection_items.dart";
 import "package:photos/models/search/search_result.dart";
 import "package:photos/models/typedefs.dart";
 import "package:photos/services/collections_service.dart";
+import "package:photos/services/machine_learning/face_ml/face_filtering/face_filtering_constants.dart";
 import "package:photos/services/search_service.dart";
 import "package:photos/ui/viewer/gallery/collection_page.dart";
 import "package:photos/ui/viewer/location/add_location_sheet.dart";
@@ -42,6 +43,7 @@ enum ResultType {
 enum SectionType {
   face,
   magic,
+  wrapped,
   location,
   album,
   // People section shows the files shared by other persons
@@ -54,34 +56,38 @@ extension SectionTypeExtensions on SectionType {
   String sectionTitle(BuildContext context) {
     switch (this) {
       case SectionType.face:
-        return S.of(context).people;
+        return AppLocalizations.of(context).people;
       case SectionType.magic:
-        return S.of(context).discover;
+        return AppLocalizations.of(context).discover;
+      case SectionType.wrapped:
+        return "Ente Rewind";
       case SectionType.location:
-        return S.of(context).locations;
+        return AppLocalizations.of(context).locations;
       case SectionType.contacts:
-        return S.of(context).contacts;
+        return AppLocalizations.of(context).contacts;
       case SectionType.album:
-        return S.of(context).albums;
+        return AppLocalizations.of(context).albums;
       case SectionType.fileTypesAndExtension:
-        return S.of(context).fileTypes;
+        return AppLocalizations.of(context).fileTypes;
     }
   }
 
   String getEmptyStateText(BuildContext context) {
     switch (this) {
       case SectionType.face:
-        return S.of(context).searchPersonsEmptySection;
+        return AppLocalizations.of(context).searchPersonsEmptySection;
       case SectionType.magic:
-        return S.of(context).searchDiscoverEmptySection;
+        return AppLocalizations.of(context).searchDiscoverEmptySection;
+      case SectionType.wrapped:
+        return "Check back soon for your 2025 highlights.";
       case SectionType.location:
-        return S.of(context).searchLocationEmptySection;
+        return AppLocalizations.of(context).searchLocationEmptySection;
       case SectionType.contacts:
-        return S.of(context).searchPeopleEmptySection;
+        return AppLocalizations.of(context).searchPeopleEmptySection;
       case SectionType.album:
-        return S.of(context).searchAlbumsEmptySection;
+        return AppLocalizations.of(context).searchAlbumsEmptySection;
       case SectionType.fileTypesAndExtension:
-        return S.of(context).searchFileTypesAndNamesEmptySection;
+        return AppLocalizations.of(context).searchFileTypesAndNamesEmptySection;
     }
   }
 
@@ -91,6 +97,7 @@ extension SectionTypeExtensions on SectionType {
     switch (this) {
       case SectionType.face:
       case SectionType.magic:
+      case SectionType.wrapped:
       case SectionType.fileTypesAndExtension:
         return false;
       case SectionType.location:
@@ -103,12 +110,14 @@ extension SectionTypeExtensions on SectionType {
   bool get sortByName =>
       this != SectionType.face &&
       this != SectionType.magic &&
+      this != SectionType.wrapped &&
       this != SectionType.contacts;
 
   bool get isEmptyCTAVisible {
     switch (this) {
       case SectionType.face:
       case SectionType.magic:
+      case SectionType.wrapped:
       case SectionType.fileTypesAndExtension:
         return false;
       case SectionType.location:
@@ -126,12 +135,14 @@ extension SectionTypeExtensions on SectionType {
       case SectionType.magic:
         // todo: later
         return "temp";
+      case SectionType.wrapped:
+        return "";
       case SectionType.location:
-        return S.of(context).addNew;
+        return AppLocalizations.of(context).addNew;
       case SectionType.contacts:
-        return S.of(context).invite;
+        return AppLocalizations.of(context).invite;
       case SectionType.album:
-        return S.of(context).addNew;
+        return AppLocalizations.of(context).addNew;
       case SectionType.fileTypesAndExtension:
         return "";
     }
@@ -142,6 +153,8 @@ extension SectionTypeExtensions on SectionType {
       case SectionType.face:
         return Icons.adaptive.arrow_forward_outlined;
       case SectionType.magic:
+        return null;
+      case SectionType.wrapped:
         return null;
       case SectionType.location:
         return Icons.add_location_alt_outlined;
@@ -159,7 +172,7 @@ extension SectionTypeExtensions on SectionType {
       case SectionType.contacts:
         return () async {
           await shareText(
-            S.of(context).shareTextRecommendUsingEnte,
+            AppLocalizations.of(context).shareTextRecommendUsingEnte,
           );
         };
       case SectionType.location:
@@ -173,9 +186,9 @@ extension SectionTypeExtensions on SectionType {
         return () async {
           final result = await showTextInputDialog(
             context,
-            title: S.of(context).newAlbum,
-            submitButtonLabel: S.of(context).create,
-            hintText: S.of(context).enterAlbumName,
+            title: AppLocalizations.of(context).newAlbum,
+            submitButtonLabel: AppLocalizations.of(context).create,
+            hintText: AppLocalizations.of(context).enterAlbumName,
             alwaysShowSuccessState: false,
             initialValue: "",
             textCapitalization: TextCapitalization.words,
@@ -207,6 +220,8 @@ extension SectionTypeExtensions on SectionType {
             await showGenericErrorDialog(context: context, error: result);
           }
         };
+      case SectionType.wrapped:
+        return () async {};
       default:
         {
           return () async {};
@@ -220,9 +235,16 @@ extension SectionTypeExtensions on SectionType {
   }) {
     switch (this) {
       case SectionType.face:
-        return SearchService.instance.getAllFace(limit);
+        return SearchService.instance.getAllFace(
+          limit,
+          minClusterSize: limit == null
+              ? kMinimumClusterSizeAllFaces
+              : kMinimumClusterSizeSearchResult,
+        );
       case SectionType.magic:
         return SearchService.instance.getMagicSectionResults(context!);
+      case SectionType.wrapped:
+        return Future.value(const <SearchResult>[]);
       case SectionType.location:
         return SearchService.instance.getAllLocationTags(limit);
 
@@ -242,6 +264,8 @@ extension SectionTypeExtensions on SectionType {
     switch (this) {
       case SectionType.location:
         return [Bus.instance.on<LocationTagUpdatedEvent>()];
+      case SectionType.wrapped:
+        return [];
       case SectionType.album:
         return [Bus.instance.on<CollectionUpdatedEvent>()];
       case SectionType.face:
@@ -259,6 +283,8 @@ extension SectionTypeExtensions on SectionType {
         return [Bus.instance.on<LocationTagUpdatedEvent>()];
       case SectionType.magic:
         return [Bus.instance.on<MagicCacheUpdatedEvent>()];
+      case SectionType.wrapped:
+        return [];
       case SectionType.contacts:
         return [Bus.instance.on<PeopleChangedEvent>()];
       default:

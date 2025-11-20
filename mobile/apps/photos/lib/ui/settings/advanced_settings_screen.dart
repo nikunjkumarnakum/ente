@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import "package:photos/core/error-reporting/super_logging.dart";
 import "package:photos/generated/l10n.dart";
 import "package:photos/service_locator.dart";
-import "package:photos/services/video_preview_service.dart";
 import 'package:photos/theme/ente_theme.dart';
 import 'package:photos/ui/components/buttons/icon_button_widget.dart';
 import 'package:photos/ui/components/captioned_text_widget.dart';
 import 'package:photos/ui/components/menu_item_widget/menu_item_widget.dart';
+import 'package:photos/ui/components/menu_section_description_widget.dart';
 import 'package:photos/ui/components/title_bar_title_widget.dart';
 import 'package:photos/ui/components/title_bar_widget.dart';
 import "package:photos/ui/components/toggle_switch_widget.dart";
+import 'package:photos/ui/notification/toast.dart';
 import "package:photos/ui/settings/app_icon_selection_screen.dart";
 import "package:photos/ui/settings/ml/machine_learning_settings_page.dart";
+import "package:photos/ui/settings/streaming/video_streaming_settings_page.dart";
 import 'package:photos/utils/navigation_util.dart';
 
 class AdvancedSettingsScreen extends StatelessWidget {
@@ -26,7 +28,7 @@ class AdvancedSettingsScreen extends StatelessWidget {
         slivers: <Widget>[
           TitleBarWidget(
             flexibleSpaceTitle: TitleBarTitleWidget(
-              title: S.of(context).advancedSettings,
+              title: AppLocalizations.of(context).advancedSettings,
             ),
             actionIcons: [
               IconButtonWidget(
@@ -50,7 +52,7 @@ class AdvancedSettingsScreen extends StatelessWidget {
                     children: [
                       MenuItemWidget(
                         captionedTextWidget: CaptionedTextWidget(
-                          title: S.of(context).machineLearning,
+                          title: AppLocalizations.of(context).machineLearning,
                         ),
                         menuItemColor: colorScheme.fillFaint,
                         trailingWidget: Icon(
@@ -94,7 +96,7 @@ class AdvancedSettingsScreen extends StatelessWidget {
                       ),
                       MenuItemWidget(
                         captionedTextWidget: CaptionedTextWidget(
-                          title: S.of(context).maps,
+                          title: AppLocalizations.of(context).maps,
                         ),
                         menuItemColor: colorScheme.fillFaint,
                         singleBorderRadius: 8,
@@ -103,36 +105,45 @@ class AdvancedSettingsScreen extends StatelessWidget {
                           value: () => flagService.mapEnabled,
                           onChanged: () async {
                             final isEnabled = flagService.mapEnabled;
-                            await flagService.setMapEnabled(!isEnabled);
+                            try {
+                              await flagService.setMapEnabled(!isEnabled);
+                            } catch (e) {
+                              showShortToast(
+                                context,
+                                AppLocalizations.of(context).somethingWentWrong,
+                              );
+                              rethrow;
+                            }
                           },
                         ),
+                      ),
+                      MenuSectionDescriptionWidget(
+                        content: AppLocalizations.of(context).mapsPrivacyNotice,
                       ),
                       const SizedBox(height: 24),
                       MenuItemWidget(
                         captionedTextWidget: CaptionedTextWidget(
-                          title: S.of(context).videoStreaming,
+                          title: AppLocalizations.of(context).videoStreaming,
                         ),
                         menuItemColor: colorScheme.fillFaint,
+                        trailingWidget: Icon(
+                          Icons.chevron_right_outlined,
+                          color: colorScheme.strokeBase,
+                        ),
                         singleBorderRadius: 8,
                         alignCaptionedTextToLeft: true,
-                        trailingWidget: ToggleSwitchWidget(
-                          value: () => VideoPreviewService
-                              .instance.isVideoStreamingEnabled,
-                          onChanged: () async {
-                            final isEnabled = VideoPreviewService
-                                .instance.isVideoStreamingEnabled;
-
-                            await VideoPreviewService.instance
-                                .setIsVideoStreamingEnabled(!isEnabled);
-                          },
-                        ),
+                        onTap: () async {
+                          // ignore: unawaited_futures
+                          routeToPage(
+                            context,
+                            const VideoStreamingSettingsPage(),
+                          );
+                        },
                       ),
-                      const SizedBox(
-                        height: 24,
-                      ),
+                      const SizedBox(height: 24),
                       MenuItemWidget(
                         captionedTextWidget: CaptionedTextWidget(
-                          title: S.of(context).crashReporting,
+                          title: AppLocalizations.of(context).crashReporting,
                         ),
                         menuItemColor: colorScheme.fillFaint,
                         singleBorderRadius: 8,

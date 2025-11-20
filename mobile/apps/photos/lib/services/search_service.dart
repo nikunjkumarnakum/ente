@@ -46,7 +46,6 @@ import 'package:photos/services/collections_service.dart';
 import "package:photos/services/date_parse_service.dart";
 import "package:photos/services/filter/db_filters.dart";
 import "package:photos/services/location_service.dart";
-import "package:photos/services/machine_learning/face_ml/face_filtering/face_filtering_constants.dart";
 import "package:photos/services/machine_learning/face_ml/person/person_service.dart";
 import 'package:photos/services/machine_learning/semantic_search/semantic_search_service.dart';
 import "package:photos/services/memories_cache_service.dart";
@@ -65,6 +64,7 @@ class SearchService {
   Future<List<EnteFile>>? _cachedFilesFuture;
   Future<List<EnteFile>>? _cachedFilesForSearch;
   Future<List<EnteFile>>? _cachedFilesForHierarchicalSearch;
+  Future<List<EnteFile>>? _cachedFilesForGenericGallery;
   Future<List<EnteFile>>? _cachedHiddenFilesFuture;
   final _logger = Logger((SearchService).toString());
   final _collectionService = CollectionsService.instance;
@@ -81,6 +81,7 @@ class SearchService {
       _cachedFilesFuture = null;
       _cachedFilesForSearch = null;
       _cachedFilesForHierarchicalSearch = null;
+      _cachedFilesForGenericGallery = null;
       _cachedHiddenFilesFuture = null;
     });
   }
@@ -141,6 +142,32 @@ class SearchService {
     return _cachedFilesForHierarchicalSearch!;
   }
 
+  Future<List<EnteFile>> getAllFilesForGenericGallery() async {
+    if (_cachedFilesFuture != null && _cachedFilesForGenericGallery != null) {
+      return _cachedFilesForGenericGallery!;
+    }
+
+    if (_cachedFilesFuture == null) {
+      _logger.info("Reading all files from db");
+      _cachedFilesFuture = FilesDB.instance.getAllFilesFromDB(
+        ignoreCollections(),
+        dedupeByUploadId: false,
+      );
+    }
+
+    _cachedFilesForGenericGallery = _cachedFilesFuture!.then((files) {
+      return applyDBFilters(
+        files,
+        DBFilterOptions(
+          dedupeUploadID: true,
+          onlyUploadedFiles: true,
+        ),
+      );
+    });
+
+    return _cachedFilesForGenericGallery!;
+  }
+
   Future<List<EnteFile>> getHiddenFiles() async {
     if (_cachedHiddenFilesFuture != null) {
       return _cachedHiddenFilesFuture!;
@@ -157,6 +184,7 @@ class SearchService {
     _cachedFilesFuture = null;
     _cachedFilesForSearch = null;
     _cachedFilesForHierarchicalSearch = null;
+    _cachedFilesForGenericGallery = null;
     _cachedHiddenFilesFuture = null;
     unawaited(memoriesCacheService.clearMemoriesCache());
   }
@@ -725,7 +753,7 @@ class SearchService {
 
   Future<List<GenericSearchResult>> getAllFace(
     int? limit, {
-    int minClusterSize = kMinimumClusterSizeSearchResult,
+    required int minClusterSize,
   }) async {
     try {
       debugPrint("getting faces");
@@ -771,9 +799,6 @@ class SearchService {
         );
       for (final personID in sortedPersonIds) {
         final files = personIdToFiles[personID]!;
-        if (files.isEmpty) {
-          continue;
-        }
         final PersonEntity p = personIdToPerson[personID]!;
         if (p.data.isIgnored) continue;
         facesResult.add(
@@ -894,13 +919,7 @@ class SearchService {
           ),
         );
       }
-      if (facesResult.isEmpty) {
-        if (kMinimumClusterSizeAllFaces < minClusterSize) {
-          return getAllFace(limit, minClusterSize: kMinimumClusterSizeAllFaces);
-        } else {
-          return [];
-        }
-      }
+      if (facesResult.isEmpty) return [];
       if (limit != null) {
         return facesResult.sublist(0, min(limit, facesResult.length));
       } else {

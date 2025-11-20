@@ -24,6 +24,7 @@ import "package:photos/ui/components/buttons/button_widget.dart";
 import "package:photos/ui/components/models/button_type.dart";
 import "package:photos/ui/components/title_bar_title_widget.dart";
 import "package:photos/ui/viewer/gallery/gallery.dart";
+import "package:photos/ui/viewer/gallery/state/boundary_reporter_mixin.dart";
 import "package:photos/ui/viewer/gallery/state/gallery_files_inherited_widget.dart";
 import "package:photos/utils/dialog_util.dart";
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
@@ -87,12 +88,15 @@ class AddPhotosPhotoWidget extends StatelessWidget {
                   Expanded(
                     child: Column(
                       children: [
-                        BottomOfTitleBarWidget(
-                          title: TitleBarTitleWidget(
-                            title: S.of(context).addMore,
+                        _AppBarWithBoundary(
+                          child: BottomOfTitleBarWidget(
+                            title: TitleBarTitleWidget(
+                              title: AppLocalizations.of(context).addMore,
+                            ),
+                            caption:
+                                AppLocalizations.of(context).selectItemsToAdd,
+                            showCloseButton: true,
                           ),
-                          caption: S.of(context).selectItemsToAdd,
-                          showCloseButton: true,
                         ),
                         Expanded(
                           child: DelayedGallery(
@@ -127,7 +131,8 @@ class AddPhotosPhotoWidget extends StatelessWidget {
                                   key: ValueKey(value),
                                   // isDisabled: !value,
                                   buttonType: ButtonType.primary,
-                                  labelText: S.of(context).addSelected,
+                                  labelText:
+                                      AppLocalizations.of(context).addSelected,
                                   onTap: () async {
                                     final selectedFile = selectedFiles.files;
                                     final ca = CollectionActions(
@@ -149,7 +154,8 @@ class AddPhotosPhotoWidget extends StatelessWidget {
                           ButtonWidget(
                             buttonType: ButtonType.secondary,
                             buttonAction: ButtonAction.second,
-                            labelText: S.of(context).addFromDevice,
+                            labelText:
+                                AppLocalizations.of(context).addFromDevice,
                             onTap: () async {
                               await _onPickFromDeviceClicked(context);
                             },
@@ -321,5 +327,25 @@ class _DelayedGalleryState extends State<DelayedGallery> {
     } else {
       return const EnteLoadingWidget();
     }
+  }
+}
+
+class _AppBarWithBoundary extends StatefulWidget {
+  final Widget child;
+
+  const _AppBarWithBoundary({required this.child});
+
+  @override
+  State<_AppBarWithBoundary> createState() => _AppBarWithBoundaryState();
+}
+
+class _AppBarWithBoundaryState extends State<_AppBarWithBoundary>
+    with BoundaryReporter {
+  @override
+  Widget build(BuildContext context) {
+    return boundaryWidget(
+      position: BoundaryPosition.top,
+      child: widget.child,
+    );
   }
 }

@@ -173,6 +173,9 @@ class _CollectionsFlexiGridViewWidgetState
             return AlbumRowItemWidget(
               widget.collections![collectionIndex],
               sideOfThumbnail,
+              key: ValueKey(
+                '${widget.tag}_${widget.collections![collectionIndex].id}',
+              ),
               tag: widget.tag,
               selectedAlbums: widget.selectedAlbums,
               onTapCallback: (c) {
@@ -238,9 +241,9 @@ class _CollectionsFlexiGridViewWidgetState
                     onTap: () async {
                       final result = await showTextInputDialog(
                         context,
-                        title: S.of(context).newAlbum,
-                        submitButtonLabel: S.of(context).create,
-                        hintText: S.of(context).enterAlbumName,
+                        title: AppLocalizations.of(context).newAlbum,
+                        submitButtonLabel: AppLocalizations.of(context).create,
+                        hintText: AppLocalizations.of(context).enterAlbumName,
                         alwaysShowSuccessState: false,
                         initialValue: "",
                         textCapitalization: TextCapitalization.words,

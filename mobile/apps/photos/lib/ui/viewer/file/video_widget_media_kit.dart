@@ -18,6 +18,7 @@ import "package:photos/module/download/task.dart";
 import "package:photos/service_locator.dart";
 import "package:photos/services/files_service.dart";
 import "package:photos/services/wake_lock_service.dart";
+import "package:photos/states/detail_page_state.dart";
 import "package:photos/theme/colors.dart";
 import "package:photos/theme/ente_theme.dart";
 import "package:photos/ui/actions/file/file_actions.dart";
@@ -31,7 +32,7 @@ import "package:photos/utils/file_util.dart";
 class VideoWidgetMediaKit extends StatefulWidget {
   final EnteFile file;
   final String? tagPrefix;
-  final Function(bool)? playbackCallback;
+  final FullScreenRequestCallback? playbackCallback;
   final bool isFromMemories;
   final void Function() onStreamChange;
   final File? preview;
@@ -272,7 +273,10 @@ class _VideoWidgetMediaKitState extends State<VideoWidgetMediaKit>
         _progressNotifier.value = count / (widget.file.fileSize ?? total);
         if (_progressNotifier.value == 1) {
           if (mounted) {
-            showShortToast(context, S.of(context).decryptingVideo);
+            showShortToast(
+              context,
+              AppLocalizations.of(context).decryptingVideo,
+            );
           }
         }
       },
@@ -283,8 +287,8 @@ class _VideoWidgetMediaKitState extends State<VideoWidgetMediaKit>
     }).onError((error, stackTrace) {
       showErrorDialog(
         context,
-        S.of(context).error,
-        S.of(context).failedToDownloadVideo,
+        AppLocalizations.of(context).error,
+        AppLocalizations.of(context).failedToDownloadVideo,
       );
     });
   }

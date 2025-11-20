@@ -7,6 +7,7 @@ package email
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -24,6 +25,63 @@ import (
 var knownInvalidEmailErrors = []string{
 	"Invalid RCPT TO address provided",
 	"Invalid domain name",
+}
+
+// https://datatracker.ietf.org/doc/html/rfc5322#section-2.1.1
+const base64LineLength = 900 // standard MIME line length for base64 content
+
+// sanitizeHeaderValue removes CR/LF and other control characters from header values
+// to prevent header injection and ensures values are single-line.
+func sanitizeHeaderValue(s string) string {
+	if s == "" {
+		return s
+	}
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		// Disallow CR and LF entirely in header values
+		if r == '\r' || r == '\n' {
+			continue
+		}
+		// Strip other ASCII control chars except tab
+		if r < 0x20 && r != '\t' {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return strings.TrimSpace(b.String())
+}
+
+// containsCRLF checks for raw CR/LF which must not appear in addresses
+func containsCRLF(s string) bool {
+	return strings.ContainsRune(s, '\r') || strings.ContainsRune(s, '\n')
+}
+
+// wrapToMaxLineLength inserts LF breaks into long base64 blobs to respect SMTP limits.
+func wrapToMaxLineLength(s string, maxLen int) string {
+	if maxLen <= 0 {
+		return s
+	}
+	// Remove existing line breaks so we can re-wrap deterministically.
+	clean := strings.ReplaceAll(strings.ReplaceAll(s, "\r", ""), "\n", "")
+	if len(clean) <= maxLen {
+		return clean
+	}
+
+	var b strings.Builder
+	// Grow buffer to avoid re-allocations; add extra space for newline characters.
+	b.Grow(len(clean) + len(clean)/maxLen)
+	for i := 0; i < len(clean); i += maxLen {
+		end := i + maxLen
+		if end > len(clean) {
+			end = len(clean)
+		}
+		b.WriteString(clean[i:end])
+		if end < len(clean) {
+			b.WriteByte('\n')
+		}
+	}
+	return b.String()
 }
 
 // Send sends an email
@@ -47,6 +105,7 @@ func sendViaSMTP(toEmails []string, fromName string, fromEmail string, subject s
 	smtpPassword := viper.GetString("smtp.password")
 	smtpEmail := viper.GetString("smtp.email")
 	smtpSenderName := viper.GetString("smtp.sender-name")
+	smtpEncryption := viper.GetString("smtp.encryption")
 
 	var emailMessage string
 	var auth smtp.Auth = nil
@@ -54,13 +113,14 @@ func sendViaSMTP(toEmails []string, fromName string, fromEmail string, subject s
 		auth = smtp.PlainAuth("", smtpUsername, smtpPassword, smtpServer)
 	}
 
-	// Construct 'emailAddresses' with comma-separated email addresses
-	var emailAddresses string
-	for i, email := range toEmails {
-		if i != 0 {
-			emailAddresses += ","
+	// Validate that no envelope addresses contain CR/LF
+	if containsCRLF(fromEmail) {
+		return stacktrace.Propagate(ente.ErrBadRequest, "invalid from email")
+	}
+	for _, addr := range toEmails {
+		if containsCRLF(addr) {
+			return stacktrace.Propagate(ente.ErrBadRequest, "invalid recipient email")
 		}
-		emailAddresses += email
 	}
 
 	// If a sender email is provided use it instead of the fromEmail.
@@ -72,9 +132,23 @@ func sendViaSMTP(toEmails []string, fromName string, fromEmail string, subject s
 		fromName = smtpSenderName
 	}
 
-	header := "From: " + fromName + " <" + fromEmail + ">\n" +
+	// Sanitize header fields to prevent header injection
+	cleanFromName := sanitizeHeaderValue(fromName)
+	cleanFromEmail := sanitizeHeaderValue(fromEmail)
+	cleanSubject := sanitizeHeaderValue(subject)
+
+	// Construct 'emailAddresses' with comma-separated sanitized email addresses for header
+	var emailAddresses string
+	for i, addr := range toEmails {
+		if i != 0 {
+			emailAddresses += ","
+		}
+		emailAddresses += sanitizeHeaderValue(addr)
+	}
+
+	header := "From: " + cleanFromName + " <" + cleanFromEmail + ">\n" +
 		"To: " + emailAddresses + "\n" +
-		"Subject: " + subject + "\n" +
+		"Subject: " + cleanSubject + "\n" +
 		"MIME-Version: 1.0\n" +
 		"Content-Type: multipart/related; boundary=boundary\n\n" +
 		"--boundary\n"
@@ -88,14 +162,15 @@ func sendViaSMTP(toEmails []string, fromName string, fromEmail string, subject s
 		for _, inlineImage := range inlineImages {
 
 			emailMessage += "--boundary\n"
-			var mimeType = inlineImage["mime_type"].(string)
-			var contentID = inlineImage["cid"].(string)
+			var mimeType = sanitizeHeaderValue(inlineImage["mime_type"].(string))
+			var contentID = sanitizeHeaderValue(inlineImage["cid"].(string))
 			var imgBase64Str = inlineImage["content"].(string)
+			var wrappedImgBase64Str = wrapToMaxLineLength(imgBase64Str, base64LineLength)
 
 			var image = "Content-Type: " + mimeType + "\n" +
 				"Content-Transfer-Encoding: base64\n" +
 				"Content-ID: <" + contentID + ">\n" +
-				"Content-Disposition: inline\n\n" + imgBase64Str + "\n"
+				"Content-Disposition: inline\n\n" + wrappedImgBase64Str + "\n"
 
 			emailMessage += image
 		}
@@ -104,7 +179,7 @@ func sendViaSMTP(toEmails []string, fromName string, fromEmail string, subject s
 
 	// Send the email to each recipient
 	for _, toEmail := range toEmails {
-		err := smtp.SendMail(smtpServer+":"+smtpPort, auth, fromEmail, []string{toEmail}, []byte(emailMessage))
+		err := sendMailWithEncryption(smtpServer, smtpPort, auth, fromEmail, []string{toEmail}, []byte(emailMessage), smtpEncryption)
 		if err != nil {
 			errMsg := err.Error()
 			for i := range knownInvalidEmailErrors {
@@ -119,6 +194,77 @@ func sendViaSMTP(toEmails []string, fromName string, fromEmail string, subject s
 	return nil
 }
 
+// sendMailWithEncryption sends an email with the specified encryption type
+// encryption can be one of:
+// - "tls" or "ssl": Uses TLS/SSL encryption for the entire connection
+// - "" (empty string) or any other value: No encryption
+func sendMailWithEncryption(host, port string, auth smtp.Auth, from string, to []string, msg []byte, encryption string) error {
+	addr := host + ":" + port
+
+	switch strings.ToLower(encryption) {
+	case "tls", "ssl":
+		// For TLS/SSL, establish a secure connection directly
+		tlsConfig := &tls.Config{
+			ServerName: host,
+			MinVersion: tls.VersionTLS12,
+		}
+		conn, err := tls.Dial("tcp", addr, tlsConfig)
+		if err != nil {
+			return stacktrace.Propagate(err, "failed to establish TLS connection")
+		}
+		defer conn.Close()
+
+		client, err := smtp.NewClient(conn, host)
+		if err != nil {
+			return stacktrace.Propagate(err, "failed to create SMTP client over TLS")
+		}
+		defer client.Close()
+
+		return sendWithClient(client, auth, from, to, msg)
+
+	default:
+		// No encryption, use standard SendMail
+		return smtp.SendMail(addr, auth, from, to, msg)
+	}
+}
+
+// sendWithClient sends an email using an established SMTP client
+func sendWithClient(client *smtp.Client, auth smtp.Auth, from string, to []string, msg []byte) error {
+	if auth != nil {
+		if err := client.Auth(auth); err != nil {
+			return stacktrace.Propagate(err, "authentication failed")
+		}
+	}
+
+	if err := client.Mail(from); err != nil {
+		return stacktrace.Propagate(err, "failed to set sender")
+	}
+
+	for _, addr := range to {
+		if err := client.Rcpt(addr); err != nil {
+			return stacktrace.Propagate(err, "failed to add recipient")
+		}
+	}
+
+	w, err := client.Data()
+	if err != nil {
+		return stacktrace.Propagate(err, "failed to create message writer")
+	}
+
+	_, err = w.Write(msg)
+	if err != nil {
+		return stacktrace.Propagate(err, "failed to write message")
+	}
+
+	err = w.Close()
+	if err != nil {
+		return stacktrace.Propagate(err, "failed to close message writer")
+	}
+
+	err = client.Quit()
+	return stacktrace.Propagate(err, "")
+}
+
 func sendViaTransmail(toEmails []string, fromName string, fromEmail string, subject string, htmlBody string, inlineImages []map[string]interface{}) error {
 	if len(toEmails) == 0 {
 		return ente.ErrBadRequest
@@ -131,14 +277,25 @@ func sendViaTransmail(toEmails []string, fromName string, fromEmail string, subj
 		return nil
 	}
 
+	// Sanitize subject and from name to avoid accidental multi-line fields
+	cleanSubject := sanitizeHeaderValue(subject)
+	cleanFromName := sanitizeHeaderValue(fromName)
+
 	var to []ente.ToEmailAddress
 	for _, toEmail := range toEmails {
+		// Reject clearly invalid recipients attempting header injection
+		if containsCRLF(toEmail) {
+			return stacktrace.Propagate(ente.ErrBadRequest, "invalid recipient email")
+		}
 		to = append(to, ente.ToEmailAddress{EmailAddress: ente.EmailAddress{Address: toEmail}})
+	}
+	if containsCRLF(fromEmail) {
+		return stacktrace.Propagate(ente.ErrBadRequest, "invalid from email")
 	}
 	mail := &ente.Mail{
 		BounceAddress: ente.TransmailEndBounceAddress,
-		From:          ente.EmailAddress{Address: fromEmail, Name: fromName},
-		Subject:       subject,
+		From:          ente.EmailAddress{Address: fromEmail, Name: cleanFromName},
+		Subject:       cleanSubject,
 		Htmlbody:      htmlBody,
 		InlineImages:  inlineImages,
 	}

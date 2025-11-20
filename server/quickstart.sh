@@ -102,6 +102,8 @@ services:
       - 3002:3002 # Public albums
       # - 3003:3003 # Auth
       # - 3004:3004 # Cast
+      # - 3005:3005 # Share
+      # - 3006:3006 # Embed
     # Modify these values to your custom subdomains, if using any
     environment:
       ENTE_API_ORIGIN: http://localhost:8080
@@ -167,14 +169,23 @@ db:
       password: $pg_pass
 
 s3:
+      # Top-level configuration for buckets, you can override by specifying these configuration in the desired bucket.
+      # Set this to false if using external object storage bucket or bucket with SSL
       are_local_buckets: true
+      # Set this to false if using subdomain-style URL. This is set to true for ensuring compatibility with MinIO when SSL is enabled.
+      use_path_style_urls: true
       b2-eu-cen:
+         # Uncomment the below configuration to override the top-level configuration 
+         # are_local_buckets: true
+         # use_path_style_urls: true
          key: $minio_user
          secret: $minio_pass
          endpoint: localhost:3200
          region: eu-central-2
          bucket: b2-eu-cen
       wasabi-eu-central-2-v3:
+         # are_local_buckets: true
+         # use_path_style_urls: true
          key: $minio_user
          secret: $minio_pass
          endpoint: localhost:3200
@@ -182,6 +193,8 @@ s3:
          bucket: wasabi-eu-central-2-v3
          compliance: false
       scw-eu-fr-v3:
+         # are_local_buckets: true
+         # use_path_style_urls: true
          key: $minio_user
          secret: $minio_pass
          endpoint: localhost:3200
@@ -194,6 +207,10 @@ apps:
     # set this to the URL where your albums web app is running.
     public-albums: http://localhost:3002
     cast: http://localhost:3004
+    # Public locker (share) app
+    public-locker: http://localhost:3005
+    # Embed app for embedded album sharing
+    embed-albums: http://localhost:3006
     # Set this to the URL where your accounts web app is running, primarily used for
     # passkey based 2FA.
     accounts: http://localhost:3001

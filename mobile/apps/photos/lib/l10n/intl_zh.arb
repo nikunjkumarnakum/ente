@@ -11,6 +11,7 @@
   "invalidEmailAddress": "无效的电子邮件地址",
   "enterValidEmail": "请输入一个有效的电子邮件地址。",
   "deleteAccount": "删除账户",
+  "deleteAccountWarning": "这将删除您的Ente 验证器、Ente 照片和 Ente 文件柜账户。",
   "askDeleteReason": "您删除账户的主要原因是什么？",
   "deleteAccountFeedbackPrompt": "我们很抱歉看到您离开。请分享您的反馈以帮助我们改进。",
   "feedback": "反馈",
@@ -34,6 +35,16 @@
   "password": "密码",
   "confirmPassword": "请确认密码",
   "activeSessions": "已登录的设备",
+  "ocrProcessingOverlayMessage": "正在检测文本……",
+  "ocrLoadingIndicatorLabel": "正在检测文本",
+  "ocrSelectionHint": "滑动或双击即可选择所需内容",
+  "ocrNoTextDetected": "未检测到文本",
+  "ocrRetryButtonLabel": "重试",
+  "ocrModelsNetworkRequiredError": "首次使用时需要连接网络才能下载 OCR 模型",
+  "ocrModelsPrepareFailed": "无法准备 OCR 模型",
+  "ocrImageNotFoundError": "未找到图像文件",
+  "ocrImageDecodeFailedError": "无法读取图像文件",
+  "ocrGenericDetectError": "无法检测到图像中的文本",
   "oops": "哎呀",
   "somethingWentWrongPleaseTryAgain": "出了点问题，请重试",
   "thisWillLogYouOutOfThisDevice": "这将使您在此设备上退出登录！",
@@ -107,6 +118,10 @@
   "enterYourPassword": "输入您的密码",
   "welcomeBack": "欢迎回来！",
   "contactSupport": "联系支持",
+  "locationPickerTip": "您也可以在照片的详情界面上添加以照片为中心的定位",
+  "@locationPickerTip": {
+    "description": "Helper tip text shown in the location picker that refers to the photo info screen."
+  },
   "incorrectPasswordTitle": "密码错误",
   "pleaseTryAgain": "请重试",
   "recreatePasswordTitle": "重新创建密码",
@@ -186,6 +201,7 @@
   "@allowAddingPhotos": {
     "description": "Switch button to enable uploading photos to a public link"
   },
+  "allowJoiningAlbum": "允许加入相册",
   "allowAddPhotosDescription": "允许具有链接的人也将照片添加到共享相册。",
   "passwordLock": "密码锁",
   "canNotOpenTitle": "无法打开此相册",
@@ -198,6 +214,11 @@
   "@noDeviceLimit": {
     "description": "Text to indicate that there is limit on number of devices"
   },
+  "albumLayout": "相册布局",
+  "layoutGrouped": "已分组",
+  "layoutContinuous": "连续",
+  "layoutTrip": "旅游",
+  "preview": "预览",
   "linkExpiry": "链接过期",
   "linkExpired": "已过期",
   "linkEnabled": "已启用",
@@ -237,7 +258,9 @@
   "shareWithNonenteUsers": "与非 Ente 用户共享",
   "createPublicLink": "创建公开链接",
   "sendLink": "发送链接",
+  "sendQrCode": "发送二维码",
   "copyLink": "复制链接",
+  "copyEmbedHtml": "复制嵌入 HTML",
   "linkHasExpired": "链接已过期",
   "publicLinkEnabled": "公开链接已启用",
   "shareALink": "分享链接",
@@ -1169,8 +1192,8 @@
     "description": "Label for the map view"
   },
   "maps": "地图",
+  "mapsPrivacyNotice": "我们会将大致坐标发送给注重隐私的第三方（例如 OpenStreetMap），以便显示地图和位置。",
   "enableMaps": "启用地图",
-  "enableMapsDesc": "这将在世界地图上显示您的照片。\n\n该地图由 Open Street Map 托管，并且您的照片的确切位置永远不会共享。\n\n您可以随时从“设置”中禁用此功能。",
   "quickLinks": "快速链接",
   "selectItemsToAdd": "选择要添加的项目",
   "addSelected": "添加所选项",
@@ -1588,7 +1611,6 @@
   },
   "legacyInvite": "{email} 已邀请您成为可信联系人",
   "authToManageLegacy": "请验证身份以管理您的可信联系人",
-  "useDifferentPlayerInfo": "播放此视频时遇到问题了吗？长按此处可尝试使用其他播放器。",
   "hideSharedItemsFromHomeGallery": "隐藏主页图库中的共享项目",
   "gallery": "图库",
   "joinAlbum": "加入相册",
@@ -1777,6 +1799,215 @@
   "different": "不同",
   "sameperson": "是同一个人？",
   "indexingPausedStatusDescription": "索引已暂停。待设备准备就绪后，索引将自动恢复。当设备的电池电量、电池健康度和温度状态处于健康范围内时，设备即被视为准备就绪。",
+  "thisWeek": "本周",
+  "lastWeek": "上周",
+  "thisMonth": "本月",
+  "thisYear": "今年",
+  "groupBy": "分组依据",
   "faceThumbnailGenerationFailed": "无法生成人脸缩略图",
-  "fileAnalysisFailed": "无法分析文件"
+  "fileAnalysisFailed": "无法分析文件",
+  "editAutoAddPeople": "编辑自动添加人物",
+  "autoAddPeople": "自动添加人物",
+  "autoAddToAlbum": "自动添加到相册",
+  "shouldRemoveFilesSmartAlbumsDesc": "应该移除之前在智能相册中选择的与该人相关的文件吗？",
+  "addingPhotos": "正在添加照片",
+  "gettingReady": "准备就绪",
+  "addSomePhotosDesc1": "添加一些照片或者选择 ",
+  "addSomePhotosDesc2": "熟悉的面孔",
+  "addSomePhotosDesc3": "首先",
+  "ignorePerson": "忽略此人",
+  "mixedGrouping": "混合分组？",
+  "analysis": "分析",
+  "doesGroupContainMultiplePeople": "这个分组包含多个人吗？",
+  "automaticallyAnalyzeAndSplitGrouping": "我们将自动分析分组以确定是否有多人在场，并再次将他们分开。这可能需要几秒钟。",
+  "layout": "布局",
+  "day": "日",
+  "undo": "撤销",
+  "redo": "重做",
+  "filter": "筛选",
+  "adjust": "调整",
+  "draw": "绘制",
+  "sticker": "贴纸",
+  "brushColor": "笔刷颜色",
+  "font": "字体",
+  "background": "背景",
+  "align": "对齐",
+  "addedToAlbums": "{count, plural, =1{已成功添加到 1 个相册} other{已成功添加到 {count} 个相册}}",
+  "@addedToAlbums": {
+    "description": "Message shown when items are added to albums",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videosProcessed": "视频已处理",
+  "totalVideos": "视频总数",
+  "skippedVideos": "已跳过的视频",
+  "videoStreamingDescriptionLine1": "在任何设备上立即播放视频。",
+  "videoStreamingDescriptionLine2": "启用以处理此设备上的视频流。",
+  "videoStreamingNote": "此设备仅处理过去 60 天内时长不超过 1 分钟的视频。对于更早/更长的视频，请在桌面应用中启用流式传输。",
+  "createStream": "创建流",
+  "recreateStream": "重建流",
+  "addedToStreamCreationQueue": "已添加到流创建队列",
+  "addedToStreamRecreationQueue": "已添加到流重建队列",
+  "videoPreviewAlreadyExists": "视频预览已存在",
+  "videoAlreadyInQueue": "视频文件已存在于队列中",
+  "videoExportFailed": "视频创建失败，请重试。",
+  "videoExportSuccess": "视频已成功创建于 {path}",
+  "@videoExportSuccess": {
+    "description": "Toast shown when a video export completes, mentioning the filesystem path.",
+    "placeholders": {
+      "path": {
+        "description": "File path where the exported video was written",
+        "type": "String",
+        "example": "/tmp/ente_export.mp4"
+      }
+    }
+  },
+  "addedToQueue": "已添加至队列",
+  "creatingStream": "正在创建流",
+  "similarImages": "相似图片",
+  "findSimilarImages": "查找相似图片",
+  "noSimilarImagesFound": "未找到相似图片",
+  "yourPhotosLookUnique": "您的照片看起来很独特",
+  "similarGroupsFound": "{count, plural, =1{{count} 组已找到} other{{count} 组已找到}}",
+  "@similarGroupsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewAndRemoveSimilarImages": "查看并删除相似图片",
+  "deletePhotosWithSize": "删除 {count} 张照片 ({size})",
+  "@deletePhotosWithSize": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "selectionOptions": "选择选项",
+  "selectExactWithCount": "完全相似 ({count})",
+  "@selectExactWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectExact": "精确选择",
+  "selectSimilarWithCount": "部分相似 ({count})",
+  "@selectSimilarWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectSimilar": "选择相似项",
+  "selectAllWithCount": "所有相似项 ({count})",
+  "@selectAllWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectSimilarImagesTitle": "选择所有相似图片",
+  "chooseSimilarImagesToSelect": "根据视觉相似性选择图像",
+  "clearSelection": "清除选择",
+  "similarImagesCount": "{count} 张相似图片",
+  "@similarImagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteWithCount": "删除 ({count}) 项",
+  "@deleteWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteFiles": "删除文件",
+  "areYouSureDeleteFiles": "您确定要删除这些文件吗？",
+  "greatJob": "做得好！",
+  "cleanedUpSimilarImages": "您已释放了 {size} 的空间",
+  "@cleanedUpSimilarImages": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "size": "大小",
+  "similarity": "相似度",
+  "analyzingPhotosLocally": "正在本地分析您的照片...",
+  "lookingForVisualSimilarities": "正在寻找视觉相似点……",
+  "comparingImageDetails": "正在比较图像细节...",
+  "findingSimilarImages": "正在寻找相似图片...",
+  "almostDone": "即将完成...",
+  "processingLocally": "正在本地处理",
+  "useMLToFindSimilarImages": "审查并删除看起来彼此相似的图像。",
+  "all": "全部",
+  "similar": "相似的",
+  "identical": "完全相同",
+  "nothingHereTryAnotherFilter": "此处无内容，请尝试其他过滤器！👀",
+  "related": "相关",
+  "hoorayyyy": "耶～～！",
+  "nothingToTidyUpHere": "这里没什么可清理的",
+  "deletingDash": "正在删除 - ",
+  "cLTitle1": "跳转到日期",
+  "cLDesc1": "在文件信息面板中选择“跳转到日期”选项，即可查看该文件日期附近的所有照片。",
+  "cLTitle2": "更快的视频编辑器",
+  "cLDesc2": "视频编辑器进行了全面改进，不仅大幅提高了编辑大型视频的速度，还改善了用户体验。",
+  "cLTitle3": "新回忆",
+  "cLDesc3": "“顽皮的孩子”、“冬季冒险”、“霓虹之夜”等等。",
+  "cLTitle4": "风景图库及更多内容",
+  "cLDesc4": "在应用主图库中支持横向布局。显示未关联任何照片的人物，而不是将其过滤掉。改进从外部应用共享视频时的长宽比检测。",
+  "closeBy": "关闭",
+  "@closeBy": {
+    "description": "Appears in the similar images page, to indicate that the images are close in terms of appearance"
+  },
+  "peopleAutoAddDesc": "自动将选定人物的照片添加到此相册",
+  "@peopleAutoAddDesc": {
+    "description": "The message the copy should convey is that photos or videos containing the selected people's faces will be automatically added to this album"
+  },
+  "festivities": "节日欢庆",
+  "snowAdventures": "冬日探险",
+  "waterfalls": "追逐瀑布",
+  "wildlife": "走进荒野",
+  "flowers": "绽放之美",
+  "nightLights": "霓虹之夜",
+  "architecture": "设计典藏",
+  "autumnColors": "秋日华彩",
+  "desertDreams": "沙漠之梦",
+  "stargazing": "星空之下",
+  "lakeside": "湖畔宁静",
+  "rainyDays": "雨天心情",
+  "sportsAction": "开赛时刻",
+  "streetArt": "街头艺术故事",
+  "familyMoments": "家庭时光",
+  "fireworks": "烟火终章",
+  "historicSites": "历史回响",
+  "tropicalParadise": "热带之旅",
+  "forestTrails": "森林漫步",
+  "citySunsets": "城市落日余晖",
+  "colorfulMarkets": "活力市集",
+  "cozyCafes": "惬意咖啡角落",
+  "vintageVibes": "复古氛围",
+  "aerialViews": "空中视角",
+  "artisticPortraits": "艺术人像",
+  "streetFood": "街头美食一口咬",
+  "riverCruises": "河上游览美景",
+  "playfulKids": "童趣时光",
+  "coastalCliffs": "海边峭壁"
 }

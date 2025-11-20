@@ -94,6 +94,13 @@ class MemoriesCacheService {
   Future<void> setShowAnyMemories(bool value) async {
     await _prefs.setBool(_showAnyMemoryKey, value);
     Bus.instance.fire(MemoriesSettingChanged());
+    if (!value) {
+      await Future.wait([
+        _clearAllScheduledOnThisDayNotifications(),
+      ]);
+    } else {
+      queueUpdateCache();
+    }
   }
 
   bool get enableSmartMemories =>
@@ -689,7 +696,7 @@ class MemoriesCacheService {
         );
         continue;
       }
-      final s = await LanguageService.s;
+      final s = await LanguageService.locals;
       await NotificationService.instance.scheduleNotification(
         s.onThisDay,
         message: s.lookBackOnYourMemories,
@@ -761,10 +768,10 @@ class MemoriesCacheService {
         );
         continue;
       }
-      final s = await LanguageService.s;
+      final s = await LanguageService.locals;
       await NotificationService.instance.scheduleNotification(
         memory.personName != null
-            ? s.wishThemAHappyBirthday(memory.personName!)
+            ? s.wishThemAHappyBirthday(name: memory.personName!)
             : s.happyBirthday,
         id: memory.id.hashCode,
         channelID: "birthday",

@@ -3,6 +3,7 @@ package ente
 import (
 	"fmt"
 	"github.com/ente-io/stacktrace"
+	"golang.org/x/net/idna"
 	"regexp"
 	"strings"
 )
@@ -38,10 +39,17 @@ type FeatureFlagResponse struct {
 	InternalUser        bool    `json:"internalUser"`
 	BetaUser            bool    `json:"betaUser"`
 	EnableMobMultiPart  bool    `json:"enableMobMultiPart"`
+	ServerApiFlag       int64   `json:"serverApiFlag"`
 	CastUrl             string  `json:"castUrl"`
+	EmbedUrl            string  `json:"embedUrl"`
 	CustomDomain        *string `json:"customDomain,omitempty"`
 	CustomDomainCNAME   string  `json:"customDomainCNAME,omitempty"`
 }
+
+const (
+	// UploadV2 marks availability of the upload v2 APIs in the binary.
+	UploadV2 int64 = 1 << 0
+)
 
 type FlagKey string
 
@@ -139,8 +147,17 @@ func isValidDomainWithoutScheme(input string) error {
 	if strings.Contains(trimmed, "://") {
 		return NewBadRequestWithMessage("domain should not contain scheme (e.g., http:// or https://)")
 	}
-	if !domainRegex.MatchString(trimmed) {
+
+	// Convert IDN to ASCII (Punycode) for validation
+	asciiDomain, err := idna.ToASCII(trimmed)
+	if err != nil {
+		return NewBadRequestWithMessage(fmt.Sprintf("invalid idn domain format: %s", trimmed))
+	}
+
+	// Validate the ASCII version
+	if !domainRegex.MatchString(asciiDomain) {
 		return NewBadRequestWithMessage(fmt.Sprintf("invalid domain format: %s", trimmed))
 	}
+
 	return nil
 }

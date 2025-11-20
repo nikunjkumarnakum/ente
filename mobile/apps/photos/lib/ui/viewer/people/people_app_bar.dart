@@ -34,6 +34,8 @@ class PeopleAppBar extends StatefulWidget {
   final String? title;
   final SelectedFiles selectedFiles;
   final PersonEntity person;
+  final bool facesTimelineReady;
+  final Future<void> Function()? onFacesTimelineTap;
 
   bool get isIgnored => person.data.isIgnored;
 
@@ -42,6 +44,8 @@ class PeopleAppBar extends StatefulWidget {
     this.title,
     this.selectedFiles,
     this.person, {
+    this.facesTimelineReady = false,
+    this.onFacesTimelineTap,
     super.key,
   });
 
@@ -56,6 +60,7 @@ enum PeoplePopupAction {
   reviewSuggestions,
   unignore,
   reassignMe,
+  memoryLane,
 }
 
 class _AppBarWidgetState extends State<PeopleAppBar> {
@@ -93,8 +98,8 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
           if (widget.title == null) {
             _appBarTitle = "Me";
           } else {
-            _appBarTitle =
-                context.l10n.accountOwnerPersonAppbarTitle(widget.title!);
+            _appBarTitle = context.l10n
+                .accountOwnerPersonAppbarTitle(title: widget.title!);
           }
         } else {
           _appBarTitle = widget.title;
@@ -112,7 +117,7 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
 
               if (person.data.email == Configuration.instance.getEmail()) {
                 _appBarTitle = context.l10n.accountOwnerPersonAppbarTitle(
-                  person.data.name,
+                  title: person.data.name,
                 );
               } else {
                 _appBarTitle = person.data.name;
@@ -214,6 +219,27 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
     }
 
     final List<PopupMenuItem<PeoplePopupAction>> items = [];
+    final bool showTimelineAction =
+        widget.facesTimelineReady && widget.onFacesTimelineTap != null;
+    if (showTimelineAction) {
+      items.add(
+        PopupMenuItem(
+          value: PeoplePopupAction.memoryLane,
+          child: Row(
+            children: [
+              const Icon(Icons.auto_awesome_outlined),
+              const Padding(
+                padding: EdgeInsets.all(8),
+              ),
+              Text(
+                context.l10n.facesTimelineAppBarTitle,
+                style: textTheme.bodyBold,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     if (!widget.isIgnored) {
       items.addAll(
@@ -227,7 +253,7 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
                   padding: EdgeInsets.all(8),
                 ),
                 Text(
-                  S.of(context).edit,
+                  AppLocalizations.of(context).edit,
                   style: textTheme.bodyBold,
                 ),
               ],
@@ -242,7 +268,7 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
                   padding: EdgeInsets.all(8),
                 ),
                 Text(
-                  S.of(context).review,
+                  AppLocalizations.of(context).review,
                   style: textTheme.bodyBold,
                 ),
               ],
@@ -257,7 +283,7 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
                   padding: EdgeInsets.all(8),
                 ),
                 Text(
-                  S.of(context).setCover,
+                  AppLocalizations.of(context).setCover,
                   style: textTheme.bodyBold,
                 ),
               ],
@@ -289,7 +315,7 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
                   padding: EdgeInsets.all(8),
                 ),
                 Text(
-                  S.of(context).remove,
+                  AppLocalizations.of(context).remove,
                   style: textTheme.bodyBold,
                 ),
               ],
@@ -308,7 +334,7 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
                 const Padding(
                   padding: EdgeInsets.all(8),
                 ),
-                Text(S.of(context).showPerson),
+                Text(AppLocalizations.of(context).showPerson),
               ],
             ),
           ),
@@ -332,6 +358,11 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
                   ),
                 ),
               );
+            } else if (value == PeoplePopupAction.memoryLane) {
+              final callback = widget.onFacesTimelineTap;
+              if (callback != null) {
+                unawaited(callback());
+              }
             } else if (value == PeoplePopupAction.rename) {
               await _editPerson(context);
             } else if (value == PeoplePopupAction.setCover) {
@@ -354,9 +385,9 @@ class _AppBarWidgetState extends State<PeopleAppBar> {
   Future<void> _resetPerson(BuildContext context) async {
     await showChoiceDialog(
       context,
-      title: S.of(context).areYouSureYouWantToResetThisPerson,
-      body: S.of(context).allPersonGroupingWillReset,
-      firstButtonLabel: S.of(context).yesResetPerson,
+      title: AppLocalizations.of(context).areYouSureYouWantToResetThisPerson,
+      body: AppLocalizations.of(context).allPersonGroupingWillReset,
+      firstButtonLabel: AppLocalizations.of(context).yesResetPerson,
       firstButtonOnTap: () async {
         try {
           await PersonService.instance.deletePerson(person.remoteID);

@@ -55,7 +55,7 @@ class _PersonClustersState extends State<PersonReviewClusterSuggestion> {
 
   // Declare a variable for the future
   late Future<List<ClusterSuggestion>> futureClusterSuggestions;
-  late StreamSubscription<PeopleChangedEvent> _peopleChangedEvent;
+  StreamSubscription<PeopleChangedEvent>? _peopleChangedEvent;
 
   @override
   void initState() {
@@ -66,7 +66,7 @@ class _PersonClustersState extends State<PersonReviewClusterSuggestion> {
 
   @override
   void dispose() {
-    _peopleChangedEvent.cancel();
+    _peopleChangedEvent?.cancel();
     super.dispose();
   }
 
@@ -101,9 +101,13 @@ class _PersonClustersState extends State<PersonReviewClusterSuggestion> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             if (snapshot.data!.isEmpty) {
+              _peopleChangedEvent?.cancel();
+              _peopleChangedEvent = null;
               return Center(
                 child: Text(
-                  S.of(context).noSuggestionsForPerson(widget.person.data.name),
+                  AppLocalizations.of(context).noSuggestionsForPerson(
+                    personName: widget.person.data.name,
+                  ),
                   style: getEnteTextTheme(context).largeMuted,
                 ),
               );
@@ -123,6 +127,7 @@ class _PersonClustersState extends State<PersonReviewClusterSuggestion> {
               clusterID,
             );
 
+            _peopleChangedEvent?.cancel();
             _peopleChangedEvent =
                 Bus.instance.on<PeopleChangedEvent>().listen((event) {
               if (event.source == clusterID.toString()) {
@@ -230,16 +235,14 @@ class _PersonClustersState extends State<PersonReviewClusterSuggestion> {
                         const SizedBox(height: 4),
                         GestureDetector(
                           behavior: HitTestBehavior.opaque,
-                          onTap: canGiveFeedback
-                              ? () => _saveAsAnotherPerson()
-                              : null,
+                          onTap: () => _saveAsAnotherPerson(),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               vertical: 12,
                               horizontal: 32,
                             ),
                             child: Text(
-                              S.of(context).saveAsAnotherPerson,
+                              AppLocalizations.of(context).saveAsAnotherPerson,
                               style: getEnteTextTheme(context).mini.copyWith(
                                     color:
                                         getEnteColorScheme(context).textMuted,
@@ -457,7 +460,7 @@ class _PersonClustersState extends State<PersonReviewClusterSuggestion> {
           );
         } else if (snapshot.hasError) {
           // log the error
-          return Center(child: Text(S.of(context).error));
+          return Center(child: Text(AppLocalizations.of(context).error));
         } else {
           canGiveFeedback = false;
           return const Center(child: CircularProgressIndicator());

@@ -269,6 +269,10 @@
       ]
     },
     {
+      "title": "Borrowell",
+      "slug": "borrowell"
+    },
+    {
       "title": "Brave Creators",
       "slug": "brave_creators",
       "altNames": [
@@ -380,6 +384,11 @@
     },
     {
       "title": "CoinDCX"
+    },
+    {
+  "title": "CoinTracking",
+  "slug": "cointracking", 
+  "altNames": ["cointracking.info", "Coin Tracking"]
     },
     {
       "title": "colorado",
@@ -542,6 +551,10 @@
       ]
     },
     {
+      "title": "Ecobee",
+      "slug": "ecobee"
+    },
+    {
       "title": "emeritihealth",
       "altNames": [
         "Emeriti Health",
@@ -661,6 +674,9 @@
       "title": "G2A"
     },
     {
+      "title": "Garena"
+    },
+    {
       "title": "Gate.io",
       "slug": "gateio.svg"
     },
@@ -735,6 +751,11 @@
       "title": "Hivelocity"
     },
     {
+  "title": "HRDocumentBox",
+  "slug": "hrdocumentbox", 
+  "altNames": ["HRDocumentBox", "HR Document Box"]
+    },
+    {
       "title": "HSA Bank",
       "slug": "hsa_bank",
       "altNames": [
@@ -775,6 +796,10 @@
     {
       "title": "ID.me",
       "slug": "id_me"
+    },
+    {
+      "title": "IDrive",
+      "slug": "idrive"
     },
     {
       "title": "ImmoScout24",
@@ -1032,11 +1057,25 @@
       "title": "Mintos"
     },
     {
+      "title": "Mint Mobile",
+      "slug": "mintmobile",
+      "altNames": [
+        "MintMobile"
+      ]
+    },
+    {
       "title": "Mistral",
       "altNames": [
         "Le Chat",
         "Mistral AI",
         "MistralAI"
+      ]
+    },
+    {
+      "title": "Mobile01",
+      "slug": "mobile01",
+      "altNames": [
+        "M01"
       ]
     },
     {
@@ -1219,6 +1258,12 @@
       "slug": "parqet"
     },
     {
+      "title": "Parallels",
+      "slug": "parallels",
+      "hex": "E61E25",
+      "altNames": ["Parallels Desktop", "Parallels VM"]
+    },
+    {
       "title": "Parsec"
     },
     {
@@ -1348,6 +1393,10 @@
         "七牛云",
         "qiniu"
       ]
+    },
+    {
+      "title": "Questrade",
+      "slug": "questrade"
     },
     {
       "title": "R10.net",
@@ -1642,6 +1691,14 @@
       "hex": "858585"
     },
     {
+      "title": "TETR.IO",
+      "slug": "tetrio",
+      "altNames": [
+        "tetrio",
+        "tetr.io"
+      ]
+    },
+    {
       "title": "Temu",
       "slug": "temu"
     },
@@ -1651,6 +1708,13 @@
       "altNames": [
         "StoryGraph",
         "TheStoryGraph"
+      ]
+    },
+    {
+      "title": "ThreatLocker",
+      "slug": "threatlocker",
+      "altNames": [
+        "ThreatLocker,Inc"
       ]
     },
     {
@@ -1664,6 +1728,12 @@
     },
     {
       "title": "Titan"
+    },
+    {
+      "title": "Tokopedia",
+      "altNames": [
+        "Tokped"
+      ]
     },
     {
       "title": "TorGuard"
@@ -1719,10 +1789,7 @@
       ]
     },
     {
-      "title": "Twitter",
-      "altNames": [
-        "X"
-      ]
+      "title": "Twitter"
     },
     {
       "title": "Ubiquiti",
@@ -1770,6 +1837,28 @@
       "altNames": [
         "UOLLET",
         "uollet.com.br"
+      ]
+    },
+    {
+      "title": "uscis",
+      "altNames": [
+        "USCIS",
+        "myuscis",
+        "uscis.gov"
+      ]
+    },
+    {
+  "title": "VHV",
+  "slug": "vhv", 
+  "altNames": ["VHV", "VHV Versicherung"]
+    },
+    {
+      "title": "Via Rail",
+      "slug": "via_rail",
+      "altNames": [
+        "Via",
+        "VIA Rail",
+        "Via Rail Canada"
       ]
     },
     {
@@ -1850,12 +1939,6 @@
     },
     {
       "title": "WYZE"
-    },
-    {
-      "title": "X",
-      "altNames": [
-        "Twitter"
-      ]
     },
     {
       "title": "Xbox",
@@ -1950,6 +2033,59 @@
     {
       "title": "Allegro",
       "slug": "allegro"
+    },
+    {
+      "title": "Leibniz Institute of Photonic Technology",
+      "slug": "leibniz-ipht"
+    },
+    {
+      "title": "University of Auckland",
+      "slug": "uoa"
+    },
+    {
+      "title": "Autenti",
+      "slug": "autenti"
+    },
+    {
+      "title": "Creately",
+      "slug": "creately"
+    },
+    {
+      "title": "ESET",
+      "slug": "eset",
+      "altNames": [
+        "ESET Home",
+        "ESET Protect",
+        "ESET Small Business Security",
+        "ESET Home Security"
+      ]
+    },
+    {
+      "title": "Binghamton University",
+      "slug": "binghamton_university",
+      "altNames": [
+        "Binghamton",
+        "Binghamton Univ",
+        "Binghamton University SSO",
+        "BingOTP"
+      ]
+    },
+    {
+      "title": "IBM",
+      "slug": "ibm",
+      "altNames": [
+        "International Business Machines",
+        "IBMid"
+      ]
+    },
+    {
+      "title": "Peking University",
+      "slug": "peking_university",
+      "altNames": [
+        "北京大学",
+        "PKU",
+        "Peking Univ"
+      ]
     }
   ]
 }

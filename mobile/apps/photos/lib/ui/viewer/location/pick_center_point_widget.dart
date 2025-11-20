@@ -79,9 +79,10 @@ class PickCenterPointWidget extends StatelessWidget {
                       children: [
                         BottomOfTitleBarWidget(
                           title: TitleBarTitleWidget(
-                            title: S.of(context).pickCenterPoint,
+                            title: AppLocalizations.of(context).pickCenterPoint,
                           ),
-                          caption: locationTagName ?? S.of(context).newLocation,
+                          caption: locationTagName ??
+                              AppLocalizations.of(context).newLocation,
                           showCloseButton: true,
                         ),
                         Expanded(
@@ -116,10 +117,12 @@ class PickCenterPointWidget extends StatelessWidget {
                               selectedFiles: selectedFiles,
                               limitSelectionToOne: true,
                               showSelectAll: false,
-                              header: const Padding(
-                                padding: EdgeInsets.all(10),
+                              header: Padding(
+                                padding: const EdgeInsets.all(10),
                                 child: NotificationTipWidget(
-                                  "You can also add a location centered on a photo from the photo's info screen",
+                                  AppLocalizations.of(
+                                    context,
+                                  ).locationPickerTip,
                                 ),
                               ),
                               disablePinnedGroupHeader: true,
@@ -152,7 +155,8 @@ class PickCenterPointWidget extends StatelessWidget {
                               key: ValueKey(value),
                               isDisabled: !value,
                               buttonType: ButtonType.neutral,
-                              labelText: S.of(context).useSelectedPhoto,
+                              labelText:
+                                  AppLocalizations.of(context).useSelectedPhoto,
                               onTap: () async {
                                 final selectedLocation =
                                     selectedFiles.files.first.location;

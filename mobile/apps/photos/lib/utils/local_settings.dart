@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'package:photos/core/constants.dart';
 import 'package:photos/ui/viewer/gallery/component/group/type.dart';
 import "package:photos/utils/ram_check_util.dart";
@@ -41,6 +43,12 @@ class LocalSettings {
       "hide_shared_items_from_home_gallery";
   static const kCollectionViewType = "collection_view_type";
   static const kCollectionSortDirection = "collection_sort_direction";
+  static const kShowLocalIDOverThumbnails = "show_local_id_over_thumbnails";
+  static const kEnableDatabaseLogging = "enable_db_logging";
+  static const _kInternalUserDisabled = "ls.internal_user_disabled";
+  static const _kWrapped2025ResumeIndex = "ls.wrapped_2025_resume_index";
+  static const _kWrapped2025Complete = "ls.wrapped_2025_complete";
+  static const _facesTimelineSeenKey = "faces_timeline_seen_person_ids";
 
   final SharedPreferences _prefs;
 
@@ -176,6 +184,24 @@ class LocalSettings {
     await _prefs.setBool(_kHasSeenMLEnablingBanner, true);
   }
 
+  bool hasSeenFacesTimeline(String personId) {
+    final seenIds = _prefs.getStringList(_facesTimelineSeenKey);
+    if (seenIds == null || seenIds.isEmpty) {
+      return false;
+    }
+    return seenIds.contains(personId);
+  }
+
+  Future<void> markFacesTimelineSeen(String personId) async {
+    final List<String> seenIds =
+        List<String>.from(_prefs.getStringList(_facesTimelineSeenKey) ?? []);
+    if (seenIds.contains(personId)) {
+      return;
+    }
+    seenIds.add(personId);
+    await _prefs.setStringList(_facesTimelineSeenKey, seenIds);
+  }
+
   //#region todo:(NG) remove this section, only needed for internal testing to see
   // if the OS stops the app during indexing
   bool get remoteFetchEnabled => _prefs.getBool("remoteFetchEnabled") ?? true;
@@ -217,4 +243,45 @@ class LocalSettings {
 
   bool get hideSharedItemsFromHomeGallery =>
       _prefs.getBool(_hideSharedItemsFromHomeGalleryTag) ?? false;
+
+  bool get showLocalIDOverThumbnails =>
+      _prefs.getBool(kShowLocalIDOverThumbnails) ?? false;
+
+  Future<void> setShowLocalIDOverThumbnails(bool value) async {
+    await _prefs.setBool(kShowLocalIDOverThumbnails, value);
+  }
+
+  bool get enableDatabaseLogging =>
+      _prefs.getBool(kEnableDatabaseLogging) ?? kDebugMode;
+
+  Future<void> setEnableDatabaseLogging(bool value) async {
+    await _prefs.setBool(kEnableDatabaseLogging, value);
+  }
+
+  bool get isInternalUserDisabled =>
+      _prefs.getBool(_kInternalUserDisabled) ?? false;
+
+  Future<void> setInternalUserDisabled(bool value) async {
+    await _prefs.setBool(_kInternalUserDisabled, value);
+  }
+
+  int wrapped2025ResumeIndex() {
+    return _prefs.getInt(_kWrapped2025ResumeIndex) ?? 0;
+  }
+
+  Future<void> setWrapped2025ResumeIndex(int index) async {
+    await _prefs.setInt(_kWrapped2025ResumeIndex, index);
+  }
+
+  bool wrapped2025Complete() {
+    return _prefs.getBool(_kWrapped2025Complete) ?? false;
+  }
+
+  Future<void> setWrapped2025Complete() async {
+    await _prefs.setBool(_kWrapped2025Complete, true);
+  }
+
+  Future<void> resetWrapped2025Complete() async {
+    await _prefs.setBool(_kWrapped2025Complete, false);
+  }
 }

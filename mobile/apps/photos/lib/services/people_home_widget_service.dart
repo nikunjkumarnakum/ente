@@ -35,13 +35,8 @@ class PeopleHomeWidgetService {
 
   // Properties
   final Logger _logger = Logger((PeopleHomeWidgetService).toString());
-  late final SharedPreferences _prefs;
+  SharedPreferences get _prefs => ServiceLocator.instance.prefs;
   final peopleChangedLock = Lock();
-
-  // Initialization
-  void init(SharedPreferences prefs) {
-    _prefs = prefs;
-  }
 
   // Public methods
   List<String>? getSelectedPeople() {
@@ -329,8 +324,11 @@ class PeopleHomeWidgetService {
       return;
     }
 
-    const limit = MAX_PEOPLE_LIMIT;
-    const maxAttempts = limit * 10;
+    final bool isWidgetPresent = await countHomeWidgets() > 0;
+    final limit = isWidgetPresent
+        ? HomeWidgetService.instance.getWidgetImageLimit()
+        : HomeWidgetService.WIDGET_IMAGE_LIMIT_MINIMAL;
+    final maxAttempts = limit * 10;
 
     int renderedCount = 0;
     int attemptsCount = 0;

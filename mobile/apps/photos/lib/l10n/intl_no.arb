@@ -1170,7 +1170,6 @@
   },
   "maps": "Kart",
   "enableMaps": "Aktiver kart",
-  "enableMapsDesc": "Dette viser dine bilder på et verdenskart.\n\nDette kartet er hostet av Open Street Map, og de nøyaktige stedene for dine bilder blir aldri delt.\n\nDu kan deaktivere denne funksjonen når som helst fra Innstillinger.",
   "quickLinks": "Hurtiglenker",
   "selectItemsToAdd": "Velg produkter å legge til",
   "addSelected": "Legg til valgte",
@@ -1403,6 +1402,16 @@
   "enableMachineLearningBanner": "Aktiver maskinlæring for magisk søk og ansiktsgjenkjenning",
   "searchDiscoverEmptySection": "Bilder vil vises her når behandlingen og synkronisering er fullført",
   "searchPersonsEmptySection": "Folk vil vises her når behandling og synkronisering er fullført",
+  "viewersSuccessfullyAdded": "{count, plural, =0 {La til 0 tilskuere} =1 {La til 1 tilskuer} other {La til {count} tilskuer}}",
+  "@viewersSuccessfullyAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    },
+    "description": "Number of viewers that were successfully added to an album."
+  },
   "collaboratorsSuccessfullyAdded": "{count, plural, =0 {La til 0 samarbeidspartner} =1 {La til 1 samarbeidspartner} other {Lagt til {count} samarbeidspartnere}}",
   "@collaboratorsSuccessfullyAdded": {
     "placeholders": {
@@ -1478,6 +1487,15 @@
   },
   "currentlyRunning": "Kjører for øyeblikket",
   "ignored": "ignorert",
+  "photosCount": "{count, plural, =0 {0 bilder} =1 {1 bilde} other {{count} bilder}}",
+  "@photosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
   "file": "Fil",
   "searchSectionsLengthMismatch": "Uoverensstemmelse i seksjonslengde: {snapshotLength} != {searchLength}",
   "@searchSectionsLengthMismatch": {
@@ -1569,7 +1587,6 @@
   },
   "legacyInvite": "{email} har invitert deg til å være en betrodd kontakt",
   "authToManageLegacy": "Vennlist autentiser deg for å administrere de betrodde kontaktene dine",
-  "useDifferentPlayerInfo": "Har du problemer med å spille av denne videoen? Hold inne her for å prøve en annen avspiller.",
   "hideSharedItemsFromHomeGallery": "Skjul delte elementer fra hjemgalleriet",
   "gallery": "Galleri",
   "joinAlbum": "Bli med i albumet",
@@ -1643,6 +1660,7 @@
   "@linkPersonCaption": {
     "description": "Caption for the 'Link person' title. It should be a continuation of the 'Link person' title. Just like how 'Link person' + 'for better sharing experience' forms a proper sentence in English, the combination of these two strings should also be a proper sentence in other languages."
   },
+  "videoStreaming": "Strømbare videoer",
   "processingVideos": "Behandler videoer",
   "streamDetails": "Strømmedetaljer",
   "processing": "Behandler",
@@ -1708,5 +1726,13 @@
   "moon": "I månelyset",
   "onTheRoad": "På veien igjen",
   "food": "Kulinær glede",
-  "pets": "Pelsvenner"
+  "pets": "Pelsvenner",
+  "curatedMemories": "Kuraterte minner",
+  "widgets": "Moduler",
+  "memories": "Minner",
+  "peopleWidgetDesc": "Velg folkene du ønsker å se på din hjemskjerm.",
+  "albumsWidgetDesc": "Velg albumene du ønsker å se på din hjemskjerm.",
+  "memoriesWidgetDesc": "Velg typen minner du ønsker å se på din hjemskjerm.",
+  "smartMemories": "Smarte minner",
+  "pastYearsMemories": "Tidligere års minner"
 }

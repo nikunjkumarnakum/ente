@@ -2,6 +2,8 @@ package collections
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/ente-io/museum/ente"
 	"github.com/ente-io/museum/pkg/controller/access"
@@ -40,14 +42,20 @@ func (c *CollectionController) Share(ctx *gin.Context, req ente.AlterShareReques
 	if !collection.AllowSharing() {
 		return nil, stacktrace.Propagate(ente.ErrBadRequest, fmt.Sprintf("sharing %s is not allowed", collection.Type))
 	}
+	shareActorID := collection.Owner.ID
 	if fromUserID != collection.Owner.ID {
-		return nil, stacktrace.Propagate(ente.ErrPermissionDenied, "")
+		shareeRole, err := c.CollectionRepo.GetCollectionShareeRole(cID, fromUserID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, stacktrace.Propagate(ente.ErrPermissionDenied, "")
+			}
+			return nil, stacktrace.Propagate(err, "")
+		}
+		if shareeRole == nil || *shareeRole != ente.ADMIN {
+			return nil, stacktrace.Propagate(ente.ErrPermissionDenied, "")
+		}
 	}
-	err = c.BillingCtrl.HasActiveSelfOrFamilySubscription(fromUserID, true)
-	if err != nil {
-		return nil, stacktrace.Propagate(err, "")
-	}
-	err = c.CollectionRepo.Share(cID, fromUserID, toUserID, encryptedKey, role, time.Microseconds())
+	err = c.CollectionRepo.Share(cID, shareActorID, toUserID, encryptedKey, role, time.Microseconds())
 	if err != nil {
 		return nil, stacktrace.Propagate(err, "")
 	}
@@ -114,8 +122,22 @@ func (c *CollectionController) UnShare(ctx *gin.Context, cID int64, fromUserID i
 	if err != nil {
 		return nil, stacktrace.Propagate(err, "")
 	}
-	isLeavingCollection := toUserID == fromUserID
-	if fromUserID != collection.Owner.ID || isLeavingCollection {
+	if toUserID == fromUserID {
+		return nil, stacktrace.Propagate(ente.ErrPermissionDenied, "")
+	}
+	if fromUserID != collection.Owner.ID {
+		shareeRole, err := c.CollectionRepo.GetCollectionShareeRole(cID, fromUserID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, stacktrace.Propagate(ente.ErrPermissionDenied, "")
+			}
+			return nil, stacktrace.Propagate(err, "")
+		}
+		if shareeRole == nil || *shareeRole != ente.ADMIN {
+			return nil, stacktrace.Propagate(ente.ErrPermissionDenied, "")
+		}
+	}
+	if toUserID == collection.Owner.ID {
 		return nil, stacktrace.Propagate(ente.ErrPermissionDenied, "")
 	}
 	err = c.CollectionRepo.UnShare(cID, toUserID)
@@ -181,7 +203,7 @@ func (c *CollectionController) UpdateShareeMagicMetadata(ctx *gin.Context, req e
 }
 
 // ShareURL generates a public auth-token for the given collectionID
-func (c *CollectionController) ShareURL(ctx context.Context, userID int64, req ente.CreatePublicAccessTokenRequest) (
+func (c *CollectionController) ShareURL(ctx *gin.Context, userID int64, req ente.CreatePublicAccessTokenRequest) (
 	ente.PublicURL, error) {
 	collection, err := c.CollectionRepo.Get(req.CollectionID)
 	if err != nil {
@@ -206,7 +228,7 @@ func (c *CollectionController) ShareURL(ctx context.Context, userID int64, req e
 
 // UpdateShareURL updates the shared url configuration
 func (c *CollectionController) UpdateShareURL(
-	ctx context.Context,
+	ctx *gin.Context,
 	userID int64,
 	req ente.UpdatePublicAccessTokenRequest,
 ) (*ente.PublicURL, error) {

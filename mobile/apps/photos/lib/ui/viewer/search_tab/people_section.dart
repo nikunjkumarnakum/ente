@@ -284,14 +284,17 @@ class PersonSearchExample extends StatelessWidget {
                                       : BorderRadius.circular(81),
                             ),
                           ),
-                          child: ColorFiltered(
-                            colorFilter: ColorFilter.mode(
-                              Colors.black.withValues(
-                                alpha: isSelected ? 0.4 : 0,
-                              ),
-                              BlendMode.darken,
-                            ),
-                            child: child,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              child,
+                              if (isSelected)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.4),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       );
@@ -347,7 +350,7 @@ class PersonSearchExample extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.only(top: 6, bottom: 0),
                         child: Text(
-                          S.of(context).addName,
+                          AppLocalizations.of(context).addName,
                           maxLines: 1,
                           textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,

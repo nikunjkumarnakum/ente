@@ -59,14 +59,14 @@ class PlatformUtil {
       if (Platform.isAndroid || Platform.isIOS) {
         await FileSaver.instance.saveAs(
           name: fileName,
-          ext: extension,
+          fileExtension: extension,
           bytes: bytes,
           mimeType: type,
         );
       } else {
         await FileSaver.instance.saveFile(
           name: fileName,
-          ext: extension,
+          fileExtension: extension,
           bytes: bytes,
           mimeType: type,
         );
@@ -78,9 +78,9 @@ class PlatformUtil {
   // https://github.com/flutter/flutter/issues/122322
   static Future<void> refocusWindows() async {
     if (!Platform.isWindows) return;
-    await windowManager.blur();
-    await windowManager.focus();
     await windowManager.setAlwaysOnTop(true);
+    await windowManager.blur();
+    await windowManager.show();
     await windowManager.setAlwaysOnTop(false);
   }
 }

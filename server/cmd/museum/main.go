@@ -31,6 +31,7 @@ import (
 
 	cache2 "github.com/ente-io/museum/ente/cache"
 	"github.com/ente-io/museum/pkg/controller/discord"
+	discountCouponCtrl "github.com/ente-io/museum/pkg/controller/discountcoupon"
 	"github.com/ente-io/museum/pkg/controller/offer"
 	"github.com/ente-io/museum/pkg/controller/usercache"
 
@@ -45,7 +46,6 @@ import (
 	"github.com/ente-io/museum/pkg/controller/email"
 	embeddingCtrl "github.com/ente-io/museum/pkg/controller/embedding"
 	"github.com/ente-io/museum/pkg/controller/family"
-	kexCtrl "github.com/ente-io/museum/pkg/controller/kex"
 	"github.com/ente-io/museum/pkg/controller/lock"
 	remoteStoreCtrl "github.com/ente-io/museum/pkg/controller/remotestore"
 	"github.com/ente-io/museum/pkg/controller/storagebonus"
@@ -56,9 +56,9 @@ import (
 	authenticatorRepo "github.com/ente-io/museum/pkg/repo/authenticator"
 	castRepo "github.com/ente-io/museum/pkg/repo/cast"
 	"github.com/ente-io/museum/pkg/repo/datacleanup"
+	discountCouponRepo "github.com/ente-io/museum/pkg/repo/discountcoupon"
 	"github.com/ente-io/museum/pkg/repo/embedding"
 	fileDataRepo "github.com/ente-io/museum/pkg/repo/filedata"
-	"github.com/ente-io/museum/pkg/repo/kex"
 	"github.com/ente-io/museum/pkg/repo/passkey"
 	"github.com/ente-io/museum/pkg/repo/remotestore"
 	storageBonusRepo "github.com/ente-io/museum/pkg/repo/storagebonus"
@@ -98,8 +98,9 @@ func main() {
 	}
 
 	viper.SetDefault("apps.public-albums", "https://albums.ente.io")
+	viper.SetDefault("apps.embed-albums", "https://embed.ente.io")
 	viper.SetDefault("apps.custom-domain.cname", "my.ente.io")
-	viper.SetDefault("apps.public-locker", "https://locker.ente.io")
+	viper.SetDefault("apps.public-locker", "https://share.ente.io")
 	viper.SetDefault("apps.accounts", "https://accounts.ente.io")
 	viper.SetDefault("apps.cast", "https://cast.ente.io")
 	viper.SetDefault("apps.family", "https://family.ente.io")
@@ -186,9 +187,7 @@ func main() {
 	collectionRepo := &repo.CollectionRepository{DB: db, FileRepo: fileRepo, CollectionLinkRepo: collectionLinkRepo,
 		TrashRepo: trashRepo, SecretEncryptionKey: secretEncryptionKeyBytes, QueueRepo: queueRepo, LatencyLogger: latencyLogger}
 	pushRepo := &repo.PushTokenRepository{DB: db}
-	kexRepo := &kex.Repository{
-		DB: db,
-	}
+
 	embeddingRepo := &embedding.Repository{DB: db}
 
 	authCache := cache.New(1*time.Minute, 15*time.Minute)
@@ -329,10 +328,6 @@ func main() {
 		TaskRepo:           taskLockingRepo,
 	}
 
-	kexCtrl := &kexCtrl.Controller{
-		Repo: kexRepo,
-	}
-
 	userController := user.NewUserController(
 		userRepo,
 		usageRepo,
@@ -392,6 +387,11 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	server := gin.New()
+
+	clientIPHeader := viper.GetString("internal.trusted-client-ip-header")
+	if clientIPHeader != "" {
+		server.TrustedPlatform = clientIPHeader
+	}
 
 	p := ginprometheus.NewPrometheus("museum")
 	p.ReqCntURLLabelMappingFn = urlSanitizer
@@ -459,6 +459,8 @@ func main() {
 	}
 	privateAPI.GET("/files/upload-urls", fileHandler.GetUploadURLs)
 	privateAPI.GET("/files/multipart-upload-urls", fileHandler.GetMultipartUploadURLs)
+	privateAPI.POST("/files/upload-url", fileHandler.GetUploadURLV2)
+	privateAPI.POST("/files/multipart-upload-url", fileHandler.GetMultipartUploadURLV2)
 	privateAPI.GET("/files/download/:fileID", fileHandler.Get)
 	privateAPI.GET("/files/download/v2/:fileID", fileHandler.Get)
 	privateAPI.GET("/files/preview/:fileID", fileHandler.GetThumbnail)
@@ -478,6 +480,7 @@ func main() {
 	privateAPI.GET("/files/data/preview", fileHandler.GetPreviewURL)
 
 	privateAPI.POST("/files", fileHandler.CreateOrUpdate)
+	privateAPI.POST("/files/meta", fileHandler.CreateMetaFile)
 	privateAPI.POST("/files/copy", fileHandler.CopyFiles)
 	privateAPI.PUT("/files/update", fileHandler.Update)
 	privateAPI.POST("/files/trash", fileHandler.Trash)
@@ -489,12 +492,6 @@ func main() {
 	privateAPI.PUT("/files/magic-metadata", fileHandler.UpdateMagicMetadata)
 	privateAPI.PUT("/files/public-magic-metadata", fileHandler.UpdatePublicMagicMetadata)
 	publicAPI.GET("/files/count", fileHandler.GetTotalFileCount)
-
-	kexHandler := &api.KexHandler{
-		Controller: kexCtrl,
-	}
-	publicAPI.GET("/kex/get", kexHandler.GetKey)
-	publicAPI.PUT("/kex/add", kexHandler.AddKey)
 
 	trashHandler := &api.TrashHandler{
 		Controller: trashController,
@@ -618,7 +615,6 @@ func main() {
 	publicCollectionAPI.GET("/multipart-upload-urls", publicCollectionHandler.GetMultipartUploadURLs)
 	publicCollectionAPI.POST("/file", publicCollectionHandler.CreateFile)
 	publicCollectionAPI.POST("/verify-password", publicCollectionHandler.VerifyPassword)
-	publicCollectionAPI.POST("/report-abuse", publicCollectionHandler.ReportAbuse)
 
 	castAPI := server.Group("/cast")
 
@@ -804,12 +800,24 @@ func main() {
 	offerHandler := &api.OfferHandler{Controller: offerController}
 	publicAPI.GET("/offers/black-friday", offerHandler.GetBlackFridayOffers)
 
+	discountCouponRepository := &discountCouponRepo.Repository{DB: db}
+	discountCouponController := &discountCouponCtrl.Controller{
+		Repo:                  discountCouponRepository,
+		UserRepo:              userRepo,
+		BillingController:     billingController,
+		EmailNotificationCtrl: emailNotificationCtrl,
+		DiscordController:     discordController,
+	}
+	discountCouponHandler := &api.DiscountCouponHandler{Controller: discountCouponController}
+	publicAPI.POST("/discount/claim", discountCouponHandler.ClaimCoupon)
+	adminAPI.POST("/discount/add-coupons", discountCouponHandler.AddCoupons)
+
 	setKnownAPIs(server.Routes())
 	setupAndStartBackgroundJobs(objectCleanupController, replicationController3, fileDataCtrl)
 	setupAndStartCrons(
 		userAuthRepo, collectionLinkRepo, fileLinkRepo, twoFactorRepo, passkeysRepo, fileController, taskLockingRepo, emailNotificationCtrl,
 		trashController, pushController, objectController, dataCleanupController, storageBonusCtrl, emergencyCtrl,
-		embeddingController, healthCheckHandler, kexCtrl, castDb)
+		embeddingController, healthCheckHandler, castDb)
 
 	// Create a new collector, the name will be used as a label on the metrics
 	collector := sqlstats.NewStatsCollector("prod_db", db)
@@ -844,7 +852,15 @@ func runServer(environment string, server *gin.Engine) {
 
 		log.Fatal(server.RunTLS(":443", certPath, keyPath))
 	} else {
-		server.Run(":8080")
+		port := 8080
+		if viper.IsSet("http.port") {
+			port = viper.GetInt("http.port")
+		}
+		log.Infof("starting server on port %d", port)
+		if server.TrustedPlatform != "" {
+			log.Infof("trusted platform header: %s", server.TrustedPlatform)
+		}
+		server.Run(fmt.Sprintf(":%d", port))
 	}
 }
 
@@ -947,7 +963,6 @@ func setupAndStartCrons(userAuthRepo *repo.UserAuthRepository, collectionLinkRep
 	emergencyCtrl *emergency.Controller,
 	embeddingCtrl *embeddingCtrl.Controller,
 	healthCheckHandler *api.HealthCheckHandler,
-	kexCtrl *kexCtrl.Controller,
 	castDb castRepo.Repository) {
 	shouldSkipCron := viper.GetBool("jobs.cron.skip")
 	if shouldSkipCron {
@@ -969,10 +984,13 @@ func setupAndStartCrons(userAuthRepo *repo.UserAuthRepository, collectionLinkRep
 
 	schedule(c, "@every 1m", func() {
 		_ = twoFactorRepo.RemoveExpiredTwoFactorSessions()
+		// Clean up used OTP codes older than 90 seconds
+		_ = twoFactorRepo.RemoveExpiredUsedOTPCodes(90 * 1000 * 1000) // 90 seconds in microseconds
 	})
 	schedule(c, "@every 1m", func() {
 		_ = twoFactorRepo.RemoveExpiredTempTwoFactorSecrets()
 	})
+
 	schedule(c, "@every 1m", func() {
 		_ = passkeysRepo.RemoveExpiredPasskeySessions()
 	})
@@ -981,6 +999,7 @@ func setupAndStartCrons(userAuthRepo *repo.UserAuthRepository, collectionLinkRep
 	})
 
 	scheduleAndRun(c, "@every 60m", func() {
+		emergencyCtrl.SendRecoveryReminder()
 		err := taskRepo.CleanupExpiredLocks()
 		if err != nil {
 			log.Printf("Error while cleaning up lock table, %s", err)
@@ -1036,6 +1055,12 @@ func setupAndStartCrons(userAuthRepo *repo.UserAuthRepository, collectionLinkRep
 
 	scheduleAndRun(c, "@every 24h", func() {
 		emailNotificationCtrl.NudgePaidSubscriberForFamily()
+		deleted, err := userAuthRepo.CleanupOldFakeSessions(context.Background())
+		if err != nil {
+			log.WithError(err).Error("Failed to cleanup old fake SRP sessions")
+		} else if deleted > 0 {
+			log.WithField("count", deleted).Info("Cleaned up old fake SRP sessions")
+		}
 	})
 
 	schedule(c, "@every 1m", func() {
@@ -1044,11 +1069,6 @@ func setupAndStartCrons(userAuthRepo *repo.UserAuthRepository, collectionLinkRep
 
 	schedule(c, "@every 24h", func() {
 		pushController.ClearExpiredTokens()
-	})
-
-	scheduleAndRun(c, "@every 60m", func() {
-		emergencyCtrl.SendRecoveryReminder()
-		kexCtrl.DeleteOldKeys()
 	})
 
 	c.Start()

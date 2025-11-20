@@ -1,5 +1,4 @@
 import "dart:async" show Timer, unawaited;
-import "dart:ui" show Image;
 
 import "package:flutter/foundation.dart";
 import "package:logging/logging.dart";
@@ -10,6 +9,7 @@ import "package:photos/db/ml/db.dart";
 import 'package:photos/events/embedding_updated_event.dart';
 import "package:photos/models/file/file.dart";
 import "package:photos/models/ml/clip.dart";
+import "package:photos/models/ml/face/dimension.dart";
 import "package:photos/models/ml/ml_versions.dart";
 import "package:photos/service_locator.dart";
 import "package:photos/services/collections_service.dart";
@@ -193,15 +193,22 @@ class SemanticSearchService {
     return results;
   }
 
-  Future<Map<String, List<int>>> getMatchingFileIDs(
+  /// Get matching file IDs for common repeated queries like smart memories and magic cache.
+  /// WARNING: Use this method carefully - it uses persistent caching which is only
+  /// beneficial for queries that are repeated across app sessions.
+  /// For regular user searches, use getMatchingFiles instead.
+  Future<Map<String, List<int>>> getMatchingFileIDsForCommonQueries(
     Map<String, double> queryToScore,
   ) async {
     final textEmbeddings = <String, List<double>>{};
     final minimumSimilarityMap = <String, double>{};
+
     for (final entry in queryToScore.entries) {
       final query = entry.key;
       final score = entry.value;
-      final textEmbedding = await _getTextEmbedding(query);
+      // Use cache service instead of _getTextEmbedding
+      final textEmbedding =
+          await textEmbeddingsCacheService.getEmbedding(query);
       textEmbeddings[query] = textEmbedding;
       minimumSimilarityMap[query] = score;
     }
@@ -210,6 +217,7 @@ class SemanticSearchService {
       textEmbeddings,
       minimumSimilarityMap: minimumSimilarityMap,
     );
+
     final result = <String, List<int>>{};
     for (final entry in queryResults.entries) {
       final query = entry.key;
@@ -303,12 +311,12 @@ class SemanticSearchService {
 
   static Future<ClipResult> runClipImage(
     int enteFileID,
-    Image image,
+    Dimensions dimensions,
     Uint8List rawRgbaBytes,
     int clipImageAddress,
   ) async {
     final embedding = await ClipImageEncoder.predict(
-      image,
+      dimensions,
       rawRgbaBytes,
       clipImageAddress,
       enteFileID,

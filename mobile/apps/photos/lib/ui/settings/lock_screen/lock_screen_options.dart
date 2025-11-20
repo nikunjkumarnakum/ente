@@ -112,9 +112,6 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
     AppLock.of(context)!.setEnabled(!appLock);
     await _configuration.setSystemLockScreen(!appLock);
     await _lockscreenSetting.removePinAndPassword();
-    if (appLock == true) {
-      await _lockscreenSetting.setHideAppContent(false);
-    }
     setState(() {
       _initializeSettings();
       appLock = !appLock;
@@ -138,7 +135,7 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
     } else if (duration.inSeconds != 0) {
       return "in ${duration.inSeconds} second${duration.inSeconds > 1 ? 's' : ''}";
     } else {
-      return S.of(context).immediately;
+      return AppLocalizations.of(context).immediately;
     }
   }
 
@@ -152,7 +149,7 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
         slivers: <Widget>[
           TitleBarWidget(
             flexibleSpaceTitle: TitleBarTitleWidget(
-              title: S.of(context).appLock,
+              title: AppLocalizations.of(context).appLock,
             ),
           ),
           SliverList(
@@ -169,7 +166,7 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
                           children: [
                             MenuItemWidget(
                               captionedTextWidget: CaptionedTextWidget(
-                                title: S.of(context).appLock,
+                                title: AppLocalizations.of(context).appLock,
                               ),
                               alignCaptionedTextToLeft: true,
                               singleBorderRadius: 8,
@@ -191,7 +188,8 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
                                         right: 12,
                                       ),
                                       child: Text(
-                                        S.of(context).appLockDescriptions,
+                                        AppLocalizations.of(context)
+                                            .appLockDescriptions,
                                         style: textTheme.miniFaint,
                                         textAlign: TextAlign.left,
                                       ),
@@ -213,7 +211,8 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
                                   children: [
                                     MenuItemWidget(
                                       captionedTextWidget: CaptionedTextWidget(
-                                        title: S.of(context).deviceLock,
+                                        title: AppLocalizations.of(context)
+                                            .deviceLock,
                                       ),
                                       surfaceExecutionStates: false,
                                       alignCaptionedTextToLeft: true,
@@ -233,7 +232,8 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
                                     ),
                                     MenuItemWidget(
                                       captionedTextWidget: CaptionedTextWidget(
-                                        title: S.of(context).pinLock,
+                                        title: AppLocalizations.of(context)
+                                            .pinLock,
                                       ),
                                       surfaceExecutionStates: false,
                                       alignCaptionedTextToLeft: true,
@@ -251,7 +251,8 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
                                     ),
                                     MenuItemWidget(
                                       captionedTextWidget: CaptionedTextWidget(
-                                        title: S.of(context).passwordLock,
+                                        title: AppLocalizations.of(context)
+                                            .passwordLock,
                                       ),
                                       surfaceExecutionStates: false,
                                       alignCaptionedTextToLeft: true,
@@ -269,7 +270,8 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
                                     ),
                                     MenuItemWidget(
                                       captionedTextWidget: CaptionedTextWidget(
-                                        title: S.of(context).autoLock,
+                                        title: AppLocalizations.of(context)
+                                            .autoLock,
                                         subTitle: _formatTime(
                                           Duration(
                                             milliseconds:
@@ -294,43 +296,8 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
                                         right: 12,
                                       ),
                                       child: Text(
-                                        S
-                                            .of(context)
+                                        AppLocalizations.of(context)
                                             .autoLockFeatureDescription,
-                                        style: textTheme.miniFaint,
-                                        textAlign: TextAlign.left,
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      height: 24,
-                                    ),
-                                    MenuItemWidget(
-                                      captionedTextWidget: CaptionedTextWidget(
-                                        title: S.of(context).hideContent,
-                                      ),
-                                      alignCaptionedTextToLeft: true,
-                                      singleBorderRadius: 8,
-                                      menuItemColor: colorTheme.fillFaint,
-                                      trailingWidget: ToggleSwitchWidget(
-                                        value: () => hideAppContent,
-                                        onChanged: () => _tapHideContent(),
-                                      ),
-                                      trailingIconColor: colorTheme.tabIcon,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        top: 14,
-                                        left: 14,
-                                        right: 12,
-                                      ),
-                                      child: Text(
-                                        Platform.isAndroid
-                                            ? S
-                                                .of(context)
-                                                .hideContentDescriptionAndroid
-                                            : S
-                                                .of(context)
-                                                .hideContentDescriptionIos,
                                         style: textTheme.miniFaint,
                                         textAlign: TextAlign.left,
                                       ),
@@ -338,6 +305,41 @@ class _LockScreenOptionsState extends State<LockScreenOptions> {
                                   ],
                                 )
                               : Container(),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: appLock ? 24 : 8),
+                            MenuItemWidget(
+                              captionedTextWidget: CaptionedTextWidget(
+                                title: AppLocalizations.of(context).hideContent,
+                              ),
+                              alignCaptionedTextToLeft: true,
+                              singleBorderRadius: 8,
+                              menuItemColor: colorTheme.fillFaint,
+                              trailingWidget: ToggleSwitchWidget(
+                                value: () => hideAppContent,
+                                onChanged: () => _tapHideContent(),
+                              ),
+                              trailingIconColor: colorTheme.tabIcon,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 14,
+                                left: 14,
+                                right: 12,
+                              ),
+                              child: Text(
+                                Platform.isAndroid
+                                    ? AppLocalizations.of(context)
+                                        .hideContentDescriptionAndroid
+                                    : AppLocalizations.of(context)
+                                        .hideContentDescriptionIos,
+                                style: textTheme.miniFaint,
+                                textAlign: TextAlign.left,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
